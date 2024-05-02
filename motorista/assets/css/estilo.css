@@ -59,26 +59,32 @@ body {
     padding: 3rem;
 }
 
-.botao-cadastro {
+.botao-cadastro,
+.botao-cadastro a {
     display: flex;
     align-items: center;
+    padding: 0.2rem 2rem;
+    
 }
 
-.botao-cadastro button {
+.botao-cadastro button,
+.botao-cadastro a {
     border: none;
     color: rgb(253, 203, 255);
     background-color: rgb(68, 68, 255);
-    padding: 0.8rem 4rem;
+    padding: 0.8rem 5rem;
     border-radius: 5px;
     cursor: pointer;
     font-size: 1rem;
 }
 
-.botao-cadastro button:hover {
-    background-color: rgb(82, 82, 255);
+.botao-cadastro button,
+.botao-cadastro a:hover{
+    background-color: rgb(96, 96, 255);
 }
 
-.botoes-cima {
+.botoes-cima,
+.botoes-cima a {
     display: flex;
     align-items: center;
 }
@@ -95,8 +101,9 @@ body {
     cursor: pointer;
 }
 
-.botoes-cima button:hover {
-    background-color: rgb(82, 82, 255);
+.botoes-cima button,
+.botoes-cima a:hover {
+    background-color: rgb(96, 96, 255);
 }
 
 .form-cabecalho h1::after {
@@ -114,7 +121,7 @@ body {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    padding: 1rem 0;
+    padding: 2rem 2rem;
     flex-direction: column;
     margin-bottom: 1.1rem;
 }
