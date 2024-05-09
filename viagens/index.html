@@ -4,9 +4,32 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="description" content="">
-	<title>Signin Template · Bootstrap v5.0</title>
+	<title>Viagens realizadas</title>
 
-	<link rel="canonical" href="https://getbootstrap.com/docs/5.0/examples/sign-in/">
+	<script lang="javascript">
+		var appPath = "/frete-avulso-front";
+		var apiUrl = "https://frete-avulso-back-production-pi-drp03-pji110.svc-us3.zcloud.ws"
+
+		function goTo(path) {
+			location.href = location.origin + appPath + path;
+		}
+
+		function callApi(path, options) {
+			let token = sessionStorage.getItem("token")
+			options = {
+				...options,
+				headers: {
+					Authorization: `Bearer ${token}`
+				}
+			}
+			return fetch(apiUrl + path, options)
+		}
+
+		var token = sessionStorage.getItem("token")
+		if (!token || token.length == 0) {
+			goTo("/login")
+		}
+	</script>
 
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
 	      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
@@ -14,7 +37,6 @@
 
 
 	<!-- Custom styles for this template -->
-	<link href="signin.css" rel="stylesheet">
 	<link rel="stylesheet" href="styles.css">
 
 	<style>
@@ -114,108 +136,122 @@
 	</div>
 </nav>
 
-<div class="container">
-	<h1>Viagens Realizadas</h1>
-	<table class="table table-responsive table-sm">
-		<thead>
-		<tr>
-			<th>ID</th>
-			<th>Data</th>
-			<th>Solicitante</th>
-			<th>NF-e</th>
-			<th>Motorista</th>
-			<th>Veículo</th>
-			<th>Origem</th>
-			<th>Destino</th>
-			<th>Desc. Carga</th>
-			<th>Valor</th>
-			<th>Despesas</th>
-			<th></th>
-		</tr>
-		</thead>
-		<tbody>
-		<tr>
-			<td class='tb01' data-title='ID'>".$row["ID_viagem"]."</td>
-			<td class='tb02' data-title='Data'>".$row["data_viagem"]."</td>
-			<td class='tb03' data-title='Solicitante'>".$row["nome_usuario"]."</td>
-			<td class='tb04' data-title='NF-e'>".$row["NF"]."</td>
-			<td class='tb05' data-title='Motorista'>".$row["nome_moto"]."</td>
-			<td class='tb06' data-title='Veículo'>".$row["placa"]."</td>
-			<td class='tb07' data-title='Origem'>".$row["origem"]."</td>
-			<td class='tb08' data-title='Destino'>".$row["destino"]."</td>
-			<td class='tb09' data-title='Desc. Carga'>".$row["carga"]."</td>
-			<td class='tb10' data-title='Valor'>".$row["valor"]."</td>
-			<td class='tb11' data-title='Despesas'>".$row["despesa"]."</td>
-			<td class='tb12'>
-				<button class='button' onclick='openPopup("1")'>Mais</button>
-			</td>
-		</tr>
-		</tbody>
-	</table>
-
-	<div class='pagination'>";
-		<a href='?page=$prevPage' class='prev'>Anterior</a>
-		|
-		<a href='?page=$nextPage' class='next'>Próxima</a>
-	</div>
-
+<main class="container mt-3">
+	<div id="mensagem-erro"></div>
+	<section class="d-flex align-items-center justify-content-center mt-5">
+		<h1 class="h2">Viagens Realizadas</h1>
+	</section>
+	<section class="d-flex flex-column align-items-center justify-content-center mt-9">
+		<table id="table-viagens" class="table table-responsive table-sm">
+			<thead>
+			<tr>
+				<th>ID</th>
+				<th>Data</th>
+				<th>Veículo</th>
+				<th>Origem</th>
+				<th>Destino</th>
+				<th>Desc. Carga</th>
+				<th>Valor</th>
+				<th></th>
+			</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+	</section>
 
 	<!-- Div do popup -->
 	<div id="popup" class="popup">
 		<!-- Conteúdo do popup será preenchido dinamicamente -->
 	</div>
 
+	<div class="overlay d-flex align-items-center justify-content-center d-none">
+		<div class="loading d-flex justify-content-center">
+			<div class="spinner-border text-primary spinner-border-sm" role="status"
+			     style="width: 3rem; height: 3rem;">
+			</div>
+		</div>
+	</div>
+
 	<script>
-		function openPopup(valor) {
-			var xhr = new XMLHttpRequest();
-			xhr.onreadystatechange = function () {
-				if (this.readyState == 4 && this.status == 200) {
-					document.getElementById("popup").innerHTML = `
-						<ul>
-				      <li>
-				        <li class='fas fa-id-badge icon'></li> <strong>ID:</strong> " . $row["ID_viagem"] .<br>
-				        <li class='far fa-calendar-alt icon'></li> <strong>Data:</strong> " . $row["data_viagem"] .<br>
-				        <li class='fas fa-user icon'></li> <strong>Solicitante:</strong> " . $row["nome_usuario"] .<br>
-				        <li class='fas fa-file-invoice-dollar icon'></li> <strong>NF-e:</strong> " . $row["NF"] .<br>
-				        <li class='fas fa-truck-moving icon'></li> <strong>Motorista:</strong> " . $row["nome_moto"] .<br>
-				        <li class='fas fa-car icon'></li> <strong>Veículo:</strong> " . $row["placa"] .<br>
-				        <li class='fas fa-map-marker-alt icon'></li> <strong>Origem:</strong> " . $row["origem"] .<br>
-				        <li class='fas fa-map-marker-alt icon'></li> <strong>Destino:</strong> " . $row["destino"] .<br>
-				        <li class='fas fa-box icon'></li> <strong>Desc. Carga:</strong> " . $row["carga"] .<br>
-				        <li class='fas fa-dollar-sign icon'></li> <strong>Valor:</strong> R$ " . $row["valor"] .<br>
-				        <li class='fas fa-receipt icon'></li> <strong>Despesas:</strong> " . $row["despesa"] .<br>
-						    <li class='fas fa-pencil-alt icon'></li><a href='atualiza_viagem.html?ID=${valor}'><button class='button'>Editar</button>
-				      </li>
+		function openPopup(id) {
+			let viagem = viagens.find(v => v.id == id)
 
-          </ul>
-					`;
+			document.getElementById("popup").innerHTML = `
+				<ul>
+		        <li class='fas fa-id-badge icon'></li> <strong>ID:</strong> ${viagem.id}<br>
+		        <li class='far fa-calendar-alt icon'></li> <strong>Data:</strong> ${viagem.dataFormatada}<br>
+		        <li class='fas fa-file-invoice-dollar icon'></li> <strong>NF-e:</strong> ${viagem.nf}<br>
+		        <li class='fas fa-truck-moving icon'></li> <strong>Motorista:</strong> ${viagem.cpf_motorista}<br>
+		        <li class='fas fa-car icon'></li> <strong>Veículo:</strong> ${viagem.placa}<br>
+		        <li class='fas fa-map-marker-alt icon'></li> <strong>Origem:</strong> ${viagem.origem}<br>
+		        <li class='fas fa-map-marker-alt icon'></li> <strong>Destino:</strong> ${viagem.destino}<br>
+		        <li class='fas fa-box icon'></li> <strong>Desc. Carga:</strong> ${viagem.carga}<br>
+		        <li class='fas fa-dollar-sign icon'></li> <strong>Valor:</strong> ${viagem.valorFormatado}<br>
+		        <li class='fas fa-receipt icon'></li> <strong>Despesas:</strong> ${viagem.despesa}<br>
+				    <li class='fas fa-pencil-alt icon'></li><button class='btn btn-primary'>Editar</button>
+        </ul>
+			`;
 
-					document.getElementById("popup").style.display = "block";
-					// Adicionando botão de fechar após carregar o conteúdo do popup
-					document.getElementById("popup").innerHTML += "<span class='close' onclick='closePopup()'> &times;</span>";
-				}
-			};
-			xhr.open("GET", "./index.html?valor=" + valor, true);
-			xhr.send();
+			document.getElementById("popup").style.display = "block";
+			// Adicionando botão de fechar após carregar o conteúdo do popup
+			document.getElementById("popup").innerHTML += "<span class='close' onclick='closePopup()'> X</span>";
+
 		}
 
 		function closePopup() {
 			document.getElementById("popup").style.display = "none";
 		}
+
+		async function atualizaViagens() {
+			try {
+				loadingStart()
+				let response = await callApi("/viagem")
+				if (response.status == 401){
+					alert("login expirado")
+					goTo("/login")
+					return
+				}
+				if (!response.ok) {
+					showAlert(document.querySelector("#mensagem-erro"), "warning", "Não foi possível localizar as viagens realizadas")
+					return
+				}
+				window.viagens = await response.json();
+
+				let table = document.getElementById("table-viagens")
+
+				let itens = ""
+				for (let viagem of viagens.reverse()) {
+					viagem.dataFormatada = (new Date(viagem.data_viagem + "  00:00")).toLocaleDateString()
+					viagem.valorFormatado = viagem.valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})
+					viagem.valorFormatado = viagem.valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})
+					viagem.despesa  = viagem.despesa?? ""
+
+					itens += `<tr>
+							<td data-title="ID">${viagem.id}</td>
+							<td data-title="Data">${viagem.dataFormatada}</td>
+							<td data-title="Veículo">${viagem.placa}</td>
+							<td data-title="Origem">${viagem.origem}</td>
+							<td data-title="Destino">${viagem.destino}</td>
+							<td data-title="Desc. Carga">${viagem.carga}</td>
+							<td data-title="Valor">${viagem.valorFormatado}</td>
+							<td><button class="btn btn-primary" onclick="openPopup(${viagem.id})">Mais</button></td>
+						</tr>`
+				}
+
+				table.tBodies[0].innerHTML = itens
+
+			} catch (e) {
+				exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar as viagens realizadas")
+			} finally {
+				loadingStop()
+			}
+		}
+
+		atualizaViagens()
 	</script>
 
-</div>
-
-</div>
-
-
-<script>
-	function toggleMenu() {
-		var menuItems = document.querySelector('.menu-items');
-		menuItems.classList.toggle('active');
-	}
-</script>
-
+</main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"

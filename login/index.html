@@ -2,6 +2,14 @@
 <html lang="en" data-bs-theme="light">
 <head>
 
+		<script lang="javascript">
+			var appPath = "/frete-avulso-front";
+			var apiUrl = "https://frete-avulso-back-production-pi-drp03-pji110.svc-us3.zcloud.ws"
+			function goTo(path){
+				location.href = location.origin + appPath + path;
+			}
+
+		</script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Gestão de viagens de retorno</title>
@@ -14,11 +22,6 @@
         html,
         body {
             height: 100%;
-        }
-
-        .form-signin {
-            max-width: 330px;
-            padding: 1rem;
         }
 
         .form-signin .form-floating:focus-within {
@@ -82,28 +85,35 @@
         }
     </script>
 </head>
-<body class="d-flex align-items-center py-4 bg-body-tertiary">
-<main class="form-signin w-100 m-auto">
-    <h1 class="h2 mb-4 text-center fw-normal">Gestão de viagens</h1>
-    <form name="login">
-        <h2 class="h4 mb-3 fw-normal">Login</h2>
+<body class="bg-body-tertiary align-items-center container mx-auto align-content-center py-4">
 
-        <div class="form-floating">
-            <input type="email" required class="form-control" id="floatingInput" placeholder="name@example.com">
-            <label for="floatingInput">Email</label>
-        </div>
-        <div class="form-floating">
-            <input type="password" required class="form-control" id="floatingPassword" placeholder="Password">
-            <label for="floatingPassword">Senha</label>
-        </div>
-        <button class="btn btn-primary w-100 py-2" type="submit">
-            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-            <span role="status">Aguarde, fazendo o login ...</span>
-            <span class="text">Login</span>
-        </button>
+<main class="d-flex align-items-center flex-row align-items-stretch shadow">
+	<div class="d-none d-md-flex col-md-6 col-lg-7 px-4 py-5" style="background-color: rgb(144, 132, 255);" >
+		<img src="./imagens/truck.png" class="img-fluid">
 
-        <div id="mensagem-erro" class="mt-4"></div>
-    </form>
+	</div>
+	<div class="form-signin m-auto px-4 py-5 p-md-5 col-md-6 col-lg-5">
+	    <h1 class="h2 mb-4 text-center fw-normal">Gestão de viagens</h1>
+	    <form name="login">
+	        <h2 class="h4 mb-3 fw-normal">Login</h2>
+
+	        <div class="form-floating">
+	            <input type="text" required class="form-control" id="floatingInput" placeholder="000.000.000-00">
+	            <label for="floatingInput">Cpf</label>
+	        </div>
+	        <div class="form-floating">
+	            <input type="password" required class="form-control" id="floatingPassword" placeholder="Password">
+	            <label for="floatingPassword">Senha</label>
+	        </div>
+	        <button class="btn btn-primary w-100 py-2" type="submit">
+	            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+	            <span role="status">Aguarde, fazendo o login ...</span>
+	            <span class="text">Login</span>
+	        </button>
+
+	        <div id="mensagem-erro" class="mt-4"></div>
+	    </form>
+	</div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
         integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
@@ -123,35 +133,37 @@
 		button.removeAttribute("status");
 	}
 
-	async function chamadaParaAPI(email, senha) {
-		return new Promise((resolve, reject) => {
-			setTimeout(() => {
-				reject({
-					email,
-					mensagem: "Senha inválida",
-					nome: "Usuario X",
-					status: 200,
-					token: "5a4sd8as5d565dsa4d6as54d8sa"
-				})
-			}, 1500)
+	async function chamadaParaAPI(cpf, senha) {
+		let request = await fetch(apiUrl + "/login", {
+			method:"post",
+			headers: {'content-type': "application/json"},
+			body: JSON.stringify({cpf, senha})
+		});
 
-		})
+			return {status: request.status, data: await request.json()};
+
 	}
 
 	document.querySelector("form").addEventListener('submit', async e => {
 		e.preventDefault();
-		let email = document.querySelector(`input[type="email"]`).value;
+		let cpf = document.querySelector(`input[type="text"]`).value;
 		let senha = document.querySelector(`input[type="password"]`).value;
 
 		loadingStart();
 		try {
-			let dadosLogin = await chamadaParaAPI(email, senha);
-			sessionStorage.setItem("user", JSON.stringify(dadosLogin));
+			let dadosLogin = await chamadaParaAPI(cpf, senha);
+			if (dadosLogin.status == 200){
+				sessionStorage.setItem("token", dadosLogin.data.access_token);
+				goTo("/viagens")
+			}
+			else{
+				showAlert(document.querySelector("#mensagem-erro"), "warning", dadosLogin.data.message)
+			}
 		} catch (e) {
 			console.log(e);
 			showAlert(document.querySelector("#mensagem-erro"), "warning", e.mensagem)
-		} finally {
 
+		} finally {
 			loadingStop();
 		}
 
