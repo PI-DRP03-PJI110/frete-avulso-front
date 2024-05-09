@@ -1,0 +1,248 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+
+}
+
+.content {
+  padding-top: 50px; /* Garante que o conteúdo não fique sob o menu */
+}
+
+.content h1{
+  display: flex;
+  justify-content: center;
+  align-items: center;	
+  margin-bottom:20px;
+	
+}
+
+
+
+* {
+
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+table {
+
+    border: 1px solid #a0a0a0 ;
+    border-collapse: collapse;
+    text-align: left;
+    width: 100%;
+    align-items: center;
+    font-family: 'Open Sans', sans-serif;
+}
+
+table thead th {
+border: 1px solid #a0a0a0;
+    padding: 10px;
+    font-size: 1em;
+    color: #000;
+    font-weight: 600;
+}
+
+table tbody tr td {
+border: 1px solid #a0a0a0;
+    display: table-cell;
+    font-weight: 400;
+    padding: 10px;
+    text-align: left;
+    position: relative;
+}
+
+table tbody tr {
+
+    border: none;
+    display: table-row;
+}
+
+table tbody tr:nth-child(odd) {
+
+    background: #f2f2f2;
+}
+
+table tbody tr td button {
+
+    display: inline-block;
+    padding: 10px 15px;
+    position: initial;
+    transform: translate(0);
+    width: auto;
+}
+
+table tbody tr td button {
+
+    background: #4CAF50;
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(34, 34, 34, 0.2);
+    color: #fff;
+    font-weight: 700;;
+    padding: 10px 0;
+    width: 100%;
+}
+
+table thead {
+
+    display: table-header-group;
+    font-weight: 500;
+}
+
+
+table tbody tr td:before {
+
+    display: none;
+}
+
+table tbody tr td button:hover, table tbody tr td button:focus {
+
+    background: #a795fe;
+    cursor: pointer;
+}
+
+@media all and (max-width: 800px) {
+
+    table tbody tr td {
+
+        display: block;
+        text-align: right;
+    }
+
+    table tbody tr td:before {
+
+        content: attr(data-title);
+        position: absolute;
+        left: 15px;
+        display: block;
+        font-weight: 600;
+        font-size: 1em;
+    }
+
+    table {
+
+        border: none;
+    }
+
+    table thead {
+
+        display: none;
+    }
+
+    table tbody tr {
+
+        margin-bottom: 10px;
+        display: block;
+        border: 1px solid #dad6eb;
+    }
+
+td.tb04 {  display: none}
+td.tb05 {  display: none}
+td.tb06 {  display: none}
+td.tb07 {  display: none}
+td.tb08 {  display: none}
+td.tb09 {  display: none}
+td.tb11 {  display: none}
+
+}
+
+
+
+/* Estilos para o botão */
+.button {
+    background-color: #007bff; /* Azul */
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.button:hover {
+    background-color: #0056b3; /* Azul mais escuro */
+}
+
+/* Estilos para o popup */
+.popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    max-width: 80%;
+    z-index: 9999;
+	width: 500px;
+}
+
+/* Estilos para o botão de fechar */
+.close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+    color: #aaa;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #555;
+}
+
+/* Estilos para a lista de viagens */
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    margin-bottom: 15px;
+}
+
+.icon {
+    margin-right: 10px;
+    color: #007bff;
+}
+
+
+.pagination {
+    text-align: center;
+	margin-left: auto;
+    margin-right: auto; 
+	margin-top: 15px;
+	margin-bottom: 25px;
+	
+}
+
+.pagination a {
+    color: #fff; /* Cor do texto dos botões */
+    background-color: #007bff; /* Cor de fundo dos botões */
+    padding: 8px 16px;
+    text-decoration: none;
+    border: 1px solid #007bff; /* Cor da borda dos botões */
+    margin: 0 4px;
+    border-radius: 4px; /* Bordas arredondadas */
+	font-size: 16px;
+}   
+
+.pagination a:hover:not(.active) {
+    background-color: #0056b3; /* Cor de fundo ao passar o mouse */
+    border-color: #0056b3; /* Cor da borda ao passar o mouse */
+}
+
+.pagination .prev,
+.pagination .next {
+    background-color: #007bff;
+    border: none;
+    cursor: pointer;
+}
+
+.pagination .prev:hover,
+.pagination .next:hover {
+    background-color: #ddd;
+}
