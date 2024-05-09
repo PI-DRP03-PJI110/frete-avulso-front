@@ -1,107 +1,224 @@
-<!doctype html>
-<html lang="en" data-bs-theme="light">
-
+<!DOCTYPE html>
+<html lang="pt">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title> Viagens </title>
-    <link rel="stylesheet" href="./assets/css/style.css" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-   
-    <style>
-        .overlay {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            background: #cccccc80;
-        }
-    </style>
-    <script lang="javascript">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="">
+	<title>Signin Template · Bootstrap v5.0</title>
 
-        function exibirMensagemDeErro(ancora, menssagem) {
-            exibirAlerta(ancora, 'danger', menssagem)
-        }
+	<link rel="canonical" href="https://getbootstrap.com/docs/5.0/examples/sign-in/">
 
-        function exibirMensagemDeAviso(ancora, menssagem) {
-            exibirAlerta(ancora, 'warning', menssagem)
-        }
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+	      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-        function exibirMensagemDeSucesso(ancora, menssagem) {
-            exibirAlerta(ancora, 'success', menssagem)
-        }
 
-        function exibirAlerta(ancora, tipo, menssagem) {
-            const wrapper = document.createElement('div')
-            wrapper.innerHTML = [
-                `<div class="alert alert-${tipo} alert-dismissible alert-dismissible fade show d-flex align-items-center" role="alert">`,
-                `   <div>${menssagem}</div>`,
-                '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
-                '</div>'
-            ].join('')
-            ancora.append(wrapper)
-        }
+	<!-- Custom styles for this template -->
+	<link href="signin.css" rel="stylesheet">
+	<link rel="stylesheet" href="styles.css">
 
-        function loadingStart() {
-            let overlay = document.querySelector(`div.overlay`);
-            overlay.classList.remove("d-none");
-            overlay.classList.add("d-flex");
-        }
+	<style>
+		.overlay {
+			position: fixed;
+			width: 100%;
+			height: 100%;
+			top: 0;
+			left: 0;
+			background: #cccccc80;
+		}
+	</style>
+	<script lang="javascript">
 
-        function loadingStop() {
-            let overlay = document.querySelector(`div.overlay`);
-            overlay.classList.add("d-none");
-            overlay.classList.remove("d-flex");
-        }
-    </script>
+		function exibirMensagemDeErro(ancora, menssagem) {
+			exibirAlerta(ancora, 'danger', menssagem)
+		}
+
+		function exibirMensagemDeAviso(ancora, menssagem) {
+			exibirAlerta(ancora, 'warning', menssagem)
+		}
+
+		function exibirMensagemDeSucesso(ancora, menssagem) {
+			exibirAlerta(ancora, 'success', menssagem)
+		}
+
+		function exibirAlerta(ancora, tipo, menssagem) {
+			const wrapper = document.createElement('div')
+			wrapper.innerHTML = [
+				`<div class="alert alert-${tipo} alert-dismissible alert-dismissible fade show d-flex align-items-center" role="alert">`,
+				`   <div>${menssagem}</div>`,
+				'   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+				'</div>'
+			].join('')
+			ancora.append(wrapper)
+		}
+
+		function loadingStart() {
+			let overlay = document.querySelector(`div.overlay`);
+			overlay.classList.remove("d-none");
+			overlay.classList.add("d-flex");
+		}
+
+		function loadingStop() {
+			let overlay = document.querySelector(`div.overlay`);
+			overlay.classList.add("d-none");
+			overlay.classList.remove("d-flex");
+		}
+	</script>
+
 </head>
+<body>
 
-<body class="align-items-center bg-body-tertiary">
+<nav class="navbar navbar-expand-lg bg-body-secondary">
+	<button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
+	        aria-controls="offcanvasNavbar">
+		<span class="navbar-toggler-icon"></span>
+	</button>
+	<div class="d-flex flex-grow-1 flex-md-grow-0 justify-content-center justify-content-md-start">
+		<h1 class="navbar-brand h-3"></h1>
+	</div>
+	<div class="offcanvas offcanvas-start flex-grow-0" tabindex="-1" id="offcanvasNavbar"
+	     aria-labelledby="offcanvasNavbarLabel">
+		<div class="offcanvas-header">
+			<h5 class="offcanvas-title" id="offcanvasNavbarLabel">Menu</h5>
+			<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+		</div>
+		<div class="offcanvas-body">
+			<ul class="navbar-nav justify-content-start pe-3">
+				<li class="nav-item d-block d-md-none">
+					<a class="nav-link" href="/viagens">Viagens</a>
+				</li>
+				<li class="nav-item d-block d-md-none">
+					<a class="nav-link active" href="/viagem">+ Viagem</a>
+				</li>
+				<li class="nav-item d-block d-md-none">
+					<a class="nav-link" href="/motorista">+ Motorista</a>
+				</li>
+				<li class="nav-item d-block d-md-none">
+					<a class="nav-link" href="/veiculo">+ Veículo</a>
+				</li>
 
-    <div class="conteudo">
-        <div class="header">
-            <div class="title">
-                <h1> Cadastro de viagens </h1>
-            </div>
-            <form>
-                <div class="buttons">
-                    <a class="btn btn-primary" type="submit" id="novo-motorista" href="/motorista"> + Motorista </a>
-                    <a class="btn btn-primary" type="submit" id="novo-veiculo" href="/veiculo"> + Veículo </a>
-                    <a class="btn btn-primary" type="submit" id="consulta-viagens" href="/viagens"> Viagem </a>
-                </div>
-                <div class="user-input">
-                    <label for="solicitante"> Solicitante </label>
-                    <input id="name" type="text" placeholder="Nome completo" required>
-                    <label for="origem"> Origem </label>
-                    <input id="origem" type="text" placeholder="Cidade - Estado" required>
-                    <label for="destino"> Destino </label>
-                    <input id="destino" type="text" placeholder="Cidade - Estado" required>
-                    <label for="motoristas"> Motorista </label>
-                    <input id="chs-driver" type="text" placeholder="Nome completo" required>
-                    <label for="veiculo-placa"> Veículo </label>
-                    <input id="chs-veicle" type="text" placeholder="Placa do veículo" size="7" maxlength="7" required>
-                    <label for="valor"> Valor viagem </label>
-                    <input id="value" type="text" format="currency" placeholder="R$" required>
-                    <label for="nota-fiscal"> Número NF-e </label>
-                    <input id="nota-fiscal" type="text" placeholder="000000000" size="9" maxlength="9" required>
-                    <label for="data-viagem"> Data viagem </label>
-                    <input id="data-viagem" type="date" required>
-                    <label for="descricao"> Descrição carga </label>
-                    <input id="descricao" type="text" placeholder="Descreva a carga" required>
-                    <label for="despesas"> Despesas </label>
-                    <input id="despesas" type="text" placeholder="Insira as despesas da viagem" required>
-                </div>
-                <div class="down-bttns">
-                    <a class="btn btn-primary" type="submit" id="botao-voltar" href="/voltar"> Voltar </a>
-                    <a class="btn btn-primary" type="submit" id="botao-cadastrar" href="/cadastrar"> Cadastrar </a>
-                </div>
-            </form>
-        </div>
-    </div>
-    <script src="./js/codigo.js"></script>
+				<li class="nav-item d-none d-md-block">
+					<a class="btn btn-outline-dark mx-1" href="/viagens">Viagens</a>
+				</li>
+				<li class="nav-item d-none d-md-block">
+					<a class="btn btn-outline-dark mx-1" href="/viagem">+ Viagem</a>
+				</li>
+				<li class="nav-item d-none d-md-block">
+					<a class="btn btn-outline-dark mx-1" href="/motorista">+ Motorista</a>
+				</li>
+				<li class="nav-item d-none d-md-block">
+					<a class="btn btn-outline-dark mx-1" href="/veiculo">+ Veículo</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</nav>
+
+<div class="container">
+	<h1>Viagens Realizadas</h1>
+	<table class="table table-responsive table-sm">
+		<thead>
+		<tr>
+			<th>ID</th>
+			<th>Data</th>
+			<th>Solicitante</th>
+			<th>NF-e</th>
+			<th>Motorista</th>
+			<th>Veículo</th>
+			<th>Origem</th>
+			<th>Destino</th>
+			<th>Desc. Carga</th>
+			<th>Valor</th>
+			<th>Despesas</th>
+			<th></th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td class='tb01' data-title='ID'>".$row["ID_viagem"]."</td>
+			<td class='tb02' data-title='Data'>".$row["data_viagem"]."</td>
+			<td class='tb03' data-title='Solicitante'>".$row["nome_usuario"]."</td>
+			<td class='tb04' data-title='NF-e'>".$row["NF"]."</td>
+			<td class='tb05' data-title='Motorista'>".$row["nome_moto"]."</td>
+			<td class='tb06' data-title='Veículo'>".$row["placa"]."</td>
+			<td class='tb07' data-title='Origem'>".$row["origem"]."</td>
+			<td class='tb08' data-title='Destino'>".$row["destino"]."</td>
+			<td class='tb09' data-title='Desc. Carga'>".$row["carga"]."</td>
+			<td class='tb10' data-title='Valor'>".$row["valor"]."</td>
+			<td class='tb11' data-title='Despesas'>".$row["despesa"]."</td>
+			<td class='tb12'>
+				<button class='button' onclick='openPopup("1")'>Mais</button>
+			</td>
+		</tr>
+		</tbody>
+	</table>
+
+	<div class='pagination'>";
+		<a href='?page=$prevPage' class='prev'>Anterior</a>
+		|
+		<a href='?page=$nextPage' class='next'>Próxima</a>
+	</div>
+
+
+	<!-- Div do popup -->
+	<div id="popup" class="popup">
+		<!-- Conteúdo do popup será preenchido dinamicamente -->
+	</div>
+
+	<script>
+		function openPopup(valor) {
+			var xhr = new XMLHttpRequest();
+			xhr.onreadystatechange = function () {
+				if (this.readyState == 4 && this.status == 200) {
+					document.getElementById("popup").innerHTML = `
+						<ul>
+				      <li>
+				        <li class='fas fa-id-badge icon'></li> <strong>ID:</strong> " . $row["ID_viagem"] .<br>
+				        <li class='far fa-calendar-alt icon'></li> <strong>Data:</strong> " . $row["data_viagem"] .<br>
+				        <li class='fas fa-user icon'></li> <strong>Solicitante:</strong> " . $row["nome_usuario"] .<br>
+				        <li class='fas fa-file-invoice-dollar icon'></li> <strong>NF-e:</strong> " . $row["NF"] .<br>
+				        <li class='fas fa-truck-moving icon'></li> <strong>Motorista:</strong> " . $row["nome_moto"] .<br>
+				        <li class='fas fa-car icon'></li> <strong>Veículo:</strong> " . $row["placa"] .<br>
+				        <li class='fas fa-map-marker-alt icon'></li> <strong>Origem:</strong> " . $row["origem"] .<br>
+				        <li class='fas fa-map-marker-alt icon'></li> <strong>Destino:</strong> " . $row["destino"] .<br>
+				        <li class='fas fa-box icon'></li> <strong>Desc. Carga:</strong> " . $row["carga"] .<br>
+				        <li class='fas fa-dollar-sign icon'></li> <strong>Valor:</strong> R$ " . $row["valor"] .<br>
+				        <li class='fas fa-receipt icon'></li> <strong>Despesas:</strong> " . $row["despesa"] .<br>
+						    <li class='fas fa-pencil-alt icon'></li><a href='atualiza_viagem.html?ID=${valor}'><button class='button'>Editar</button>
+				      </li>
+
+          </ul>
+					`;
+
+					document.getElementById("popup").style.display = "block";
+					// Adicionando botão de fechar após carregar o conteúdo do popup
+					document.getElementById("popup").innerHTML += "<span class='close' onclick='closePopup()'> &times;</span>";
+				}
+			};
+			xhr.open("GET", "./index.html?valor=" + valor, true);
+			xhr.send();
+		}
+
+		function closePopup() {
+			document.getElementById("popup").style.display = "none";
+		}
+	</script>
+
+</div>
+
+</div>
+
+
+<script>
+	function toggleMenu() {
+		var menuItems = document.querySelector('.menu-items');
+		menuItems.classList.toggle('active');
+	}
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
 </body>
-
 </html>
