@@ -376,7 +376,7 @@
 			window.viagemAEditar = await respostaApi.json();
 			document.getElementById("method").value = "put"
 			document.getElementById("id").value = viagemAEditar.id
-			document.getElementById("solicitante").value = viagemAEditar.solicitante
+			document.getElementById("solicitante").value = viagemAEditar.solicitante ?? ""
 			document.getElementById("origem").value = viagemAEditar.origem
 			document.getElementById("destino").value = viagemAEditar.destino
 			document.getElementById("motorista").value = viagemAEditar.cpf_motorista

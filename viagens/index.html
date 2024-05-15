@@ -181,7 +181,8 @@
 
 			document.getElementById("popup").innerHTML = `
 				<ul>
-		        <li class='fas fa-id-badge icon'></li> <strong>ID:</strong> ${viagem.id}<br>
+		        <li class='fas fa-circle icon'></li> <strong>ID:</strong> ${viagem.id}<br>
+		        <li class='fas fa-user icon'></li> <strong>Solicitante:</strong> ${viagem.solicitante ?? ""}<br>
 		        <li class='far fa-calendar-alt icon'></li> <strong>Data:</strong> ${viagem.dataFormatada}<br>
 		        <li class='fas fa-file-invoice-dollar icon'></li> <strong>NF-e:</strong> ${viagem.nf}<br>
 		        <li class='fas fa-truck-moving icon'></li> <strong>Motorista:</strong> ${viagem.cpf_motorista}<br>
