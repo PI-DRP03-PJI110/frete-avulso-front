@@ -1,107 +1,453 @@
-<!doctype html>
-<html lang="en" data-bs-theme="light">
+<!DOCTYPE html>
+<html lang="pt">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title> Viagens </title>
-    <link rel="stylesheet" href="assets/css/style.css" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-   
-    <style>
-        .overlay {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            background: #cccccc80;
-        }
-    </style>
-    <script lang="javascript">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="">
+	<title>cadastro de viagens</title>
 
-        function exibirMensagemDeErro(ancora, menssagem) {
-            exibirAlerta(ancora, 'danger', menssagem)
-        }
+	<script lang="javascript">
+		var appPath = "/frete-avulso-front";
+		var apiUrl = "https://frete-avulso-back-production-pi-drp03-pji110.svc-us3.zcloud.ws"
 
-        function exibirMensagemDeAviso(ancora, menssagem) {
-            exibirAlerta(ancora, 'warning', menssagem)
-        }
+		function goTo(path) {
+			location.href = location.origin + appPath + path;
+		}
 
-        function exibirMensagemDeSucesso(ancora, menssagem) {
-            exibirAlerta(ancora, 'success', menssagem)
-        }
+		async function callApi(path, options) {
+			let token = sessionStorage.getItem("token")
+			options = {
+				...options,
+				headers: {
+					'content-type': "application/json",
+					Authorization: `Bearer ${token}`
+				}
+			}
+			return fetch(apiUrl + path, options)
+		}
 
-        function exibirAlerta(ancora, tipo, menssagem) {
-            const wrapper = document.createElement('div')
-            wrapper.innerHTML = [
-                `<div class="alert alert-${tipo} alert-dismissible alert-dismissible fade show d-flex align-items-center" role="alert">`,
-                `   <div>${menssagem}</div>`,
-                '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
-                '</div>'
-            ].join('')
-            ancora.append(wrapper)
-        }
+		var token = sessionStorage.getItem("token")
+		if (!token || token.length == 0) {
+			goTo("/login")
+		}
+	</script>
 
-        function loadingStart() {
-            let overlay = document.querySelector(`div.overlay`);
-            overlay.classList.remove("d-none");
-            overlay.classList.add("d-flex");
-        }
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+	      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-        function loadingStop() {
-            let overlay = document.querySelector(`div.overlay`);
-            overlay.classList.add("d-none");
-            overlay.classList.remove("d-flex");
-        }
-    </script>
+
+	<style>
+		.overlay {
+			position: fixed;
+			width: 100%;
+			height: 100%;
+			top: 0;
+			left: 0;
+			background: #cccccc80;
+		}
+
+		.table-w-auto-ajust {
+			min-width: 100%;
+		}
+
+		@media (min-width: 576px) {
+			.table-w-auto-ajust {
+				min-width: 200px;
+			}
+		}
+
+		@media (min-width: 768px) {
+			.table-w-auto-ajust {
+				min-width: 400px;
+			}
+		}
+
+		@media (min-width: 992px) {
+			.table-w-auto-ajust {
+				min-width: 600px;
+			}
+		}
+
+		@media (min-width: 1200px) {
+			.table-w-auto-ajust {
+				min-width: 800px;
+			}
+		}
+
+	</style>
+	<script lang="javascript">
+
+		function exibirMensagemDeErro(ancora, menssagem) {
+			exibirAlerta(ancora, 'danger', menssagem)
+		}
+
+		function exibirMensagemDeAviso(ancora, menssagem) {
+			exibirAlerta(ancora, 'warning', menssagem)
+		}
+
+		function exibirMensagemDeSucesso(ancora, menssagem) {
+			exibirAlerta(ancora, 'success', menssagem)
+		}
+
+		function exibirAlerta(ancora, tipo, menssagem) {
+			const wrapper = document.createElement('div')
+			wrapper.innerHTML = [
+				`<div class="alert alert-${tipo} alert-dismissible alert-dismissible fade show d-flex align-items-center" role="alert">`,
+				`   <div>${menssagem}</div>`,
+				'   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+				'</div>'
+			].join('')
+			ancora.append(wrapper)
+		}
+
+		function loadingStart() {
+			let overlay = document.querySelector(`div.overlay`);
+			overlay.classList.remove("d-none");
+			overlay.classList.add("d-flex");
+		}
+
+		function loadingStop() {
+			let overlay = document.querySelector(`div.overlay`);
+			overlay.classList.add("d-none");
+			overlay.classList.remove("d-flex");
+		}
+	</script>
 </head>
 
-<body class="align-items-center bg-body-tertiary">
 
-    <div class="conteudo">
-        <div class="header">
-            <div class="title">
-                <h1> Cadastro de viagens </h1>
-            </div>
-            <form>
-                <div class="buttons">
-                    <a class="btn btn-primary" type="submit" id="novo-motorista" href="/motorista"> + Motorista </a>
-                    <a class="btn btn-primary" type="submit" id="novo-veiculo" href="/veiculo"> + Veículo </a>
-                    <a class="btn btn-primary" type="submit" id="consulta-viagens" href="/viagens"> Viagem </a>
-                </div>
-                <div class="user-input">
-                    <label for="solicitante"> Solicitante </label>
-                    <input id="name" type="text" placeholder="Nome completo" required>
-                    <label for="origem"> Origem </label>
-                    <input id="origem" type="text" placeholder="Cidade - Estado" required>
-                    <label for="destino"> Destino </label>
-                    <input id="destino" type="text" placeholder="Cidade - Estado" required>
-                    <label for="motoristas"> Motorista </label>
-                    <input id="chs-driver" type="text" placeholder="Nome completo" required>
-                    <label for="veiculo-placa"> Veículo </label>
-                    <input id="chs-veicle" type="text" placeholder="Placa do veículo" size="7" maxlength="7" required>
-                    <label for="valor"> Valor viagem </label>
-                    <input id="value" type="text" format="currency" placeholder="R$" required>
-                    <label for="nota-fiscal"> Número NF-e </label>
-                    <input id="nota-fiscal" type="text" placeholder="000000000" size="9" maxlength="9" required>
-                    <label for="data-viagem"> Data viagem </label>
-                    <input id="data-viagem" type="date" required>
-                    <label for="descricao"> Descrição carga </label>
-                    <input id="descricao" type="text" placeholder="Descreva a carga" required>
-                    <label for="despesas"> Despesas </label>
-                    <input id="despesas" type="text" placeholder="Insira as despesas da viagem" required>
-                </div>
-                <div class="down-bttns">
-                    <a class="btn btn-primary" type="submit" id="botao-voltar" href="/voltar"> Voltar </a>
-                    <a class="btn btn-primary" type="submit" id="botao-cadastrar" href="/cadastrar"> Cadastrar </a>
-                </div>
-            </form>
-        </div>
-    </div>
-    <script src="./js/codigo.js"></script>
+<body>
+<nav class="navbar navbar-expand-lg bg-body-secondary">
+	<button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
+	        aria-controls="offcanvasNavbar">
+		<span class="navbar-toggler-icon"></span>
+	</button>
+	<div class="d-flex flex-grow-1 flex-md-grow-0 justify-content-center justify-content-md-start">
+		<h1 class="navbar-brand h-3"></h1>
+	</div>
+	<div class="offcanvas offcanvas-start flex-grow-0" tabindex="-1" id="offcanvasNavbar"
+	     aria-labelledby="offcanvasNavbarLabel">
+		<div class="offcanvas-header">
+			<h5 class="offcanvas-title" id="offcanvasNavbarLabel">Menu</h5>
+			<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+		</div>
+		<div class="offcanvas-body">
+			<ul class="navbar-nav justify-content-start pe-3">
+				<li class="nav-item d-block d-md-none">
+					<a class="nav-link" href="/frete-avulso-front/viagens">Viagens</a>
+				</li>
+				<li class="nav-item d-block d-md-none">
+					<a class="nav-link disabled" href="/frete-avulso-front/viagem">+ Viagem</a>
+				</li>
+				<li class="nav-item d-block d-md-none">
+					<a class="nav-link" href="/frete-avulso-front/motorista">+ Motorista</a>
+				</li>
+				<li class="nav-item d-block d-md-none">
+					<a class="nav-link" href="/frete-avulso-front/veiculos">+ Veículo</a>
+				</li>
+
+				<li class="nav-item d-none d-md-block">
+					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/viagens">Viagens</a>
+				</li>
+				<li class="nav-item d-none d-md-block">
+					<a class="btn btn-outline-dark mx-1 disabled" href="/frete-avulso-front/viagem">+ Viagem</a>
+				</li>
+				<li class="nav-item d-none d-md-block">
+					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/motorista">+ Motorista</a>
+				</li>
+				<li class="nav-item d-none d-md-block">
+					<a class="btn btn-outline-dark mx-1 " href="/frete-avulso-front/veiculos">+ Veículo</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</nav>
+<main class="container-fluid container-md">
+	<div id="mensagem-erro" class="mt-3"></div>
+	<section class="d-flex align-items-center justify-content-center mt-5">
+		<h1 class="h2">Cadastro de Viagem</h1>
+	</section>
+	<section>
+		<form>
+			<div class="row justify-content-md-center align-items-end">
+				<input type="hidden" name="method" id="method" value="post">
+				<input type="hidden" name="id" id="id">
+				<div class="col-12 col-md mt-3">
+					<label for="solicitante" class="form-label">Solicitante</label>
+					<input name="solicitante" id="solicitante" type="text" class="form-control"
+					       placeholder="Empresa solicitante" aria-label="solicitante">
+				</div>
+				<div class="col-12 col-md mt-3">
+					<label for="origem" class="form-label">Origem</label>
+					<input name="origem" id="origem" type="text" class="form-control" placeholder="origem do trajeto"
+					       aria-label="origem">
+				</div>
+				<div class="col-12 col-md mt-3">
+					<label for="destino" class="form-label">Destino</label>
+					<input name="destino" id="destino" type="text" class="form-control" placeholder="destino do trajeto"
+					       aria-label="destino">
+				</div>
+			</div>
+			<div class="row justify-content-md-center align-items-end">
+				<div class="col-12 col-md-3 mt-3">
+					<label for="motorista" class="form-label">Motorista</label>
+					<select class="form-select" name="motorista" id="motorista" type="text" aria-label="motorista" onchange="preencheVeiculo()">
+					</select>
+				</div>
+				<div class="col-12 col-md-3 mt-3">
+					<label for="placa" class="form-label">Veículo</label>
+					<select class="form-select" name="placa" id="placa" type="text" aria-label="veiculo">
+					</select>
+				</div>
+				<div class="col-12 col-md-2 mt-3">
+					<label for="data" class="form-label">Data</label>
+					<input name="data" id="data" type="date" class="form-control" aria-label="data">
+				</div>
+				<div class="col-12 col-md-2 mt-3">
+
+					<label for="valor" class="form-label">Valor</label>
+					<div class="input-group">
+						<span class="input-group-text">$</span>
+						<input name="valor" id="valor" type="number" step="any" class="form-control" placeholder="00.0000,00"
+						       aria-label="valor">
+					</div>
+				</div>
+				<div class="col-12 col-md-2 mt-3">
+					<label for="nf" class="form-label">Nota fiscal</label>
+					<input name="nf" id="nf" type="text" class="form-control" aria-label="nf-e">
+				</div>
+			</div>
+			<div class="row justify-content-md-center align-items-end">
+				<div class="col-12 col-md mt-3">
+					<label for="carga" class="form-label">Carga</label>
+					<textarea name="carga" id="carga" class="form-control"
+					          placeholder="Descrição da carga transportada" aria-label="carga"></textarea>
+				</div>
+
+				<div class="col-12 col-md mt-3">
+					<label for="despesa" class="form-label">Despesa</label>
+					<textarea name="despesa" id="despesa" class="form-control" placeholder="lançar despesas caso houver"
+					          aria-label="despesa"></textarea>
+				</div>
+			</div>
+			<div class="d-flex flex-row mt-3 justify-content-between align-items-end">
+				<button class="btn btn-danger">Excluir</button>
+				<button class="btn btn-primary">Salvar</button>
+			</div>
+		</form>
+	</section>
+</main>
+<div class="overlay d-flex align-items-center justify-content-center d-none">
+	<div class="loading d-flex justify-content-center">
+		<div class="spinner-border text-primary spinner-border-sm" role="status"
+		     style="width: 3rem; height: 3rem;">
+		</div>
+	</div>
+</div>
+<script lang="javascript">
+	var slotAvisos = document.querySelector("#mensagem-erro")
+
+	function preencheVeiculo(){
+		let cpf = document.getElementById("motorista").value;
+		let veiculoDoMotorista =  veiculos.find(v => v.cpf_motorista === cpf);
+		if (veiculoDoMotorista){
+			document.getElementById("placa").value = veiculoDoMotorista.placa;
+		}
+	}
+
+	async function buscarMotoristas() {
+		try {
+			let response = await callApi("/motorista")
+			if (response.status == 401) {
+				alert("login expirado")
+				goTo("/login")
+				return
+			}
+			if (!response.ok) {
+				exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os motoristas cadastrados")
+				return
+			}
+			window.motoristas = await response.json();
+			let selectMotoristas = document.getElementById("motorista");
+
+			for (let motorista of motoristas) {
+				let option = document.createElement("option");
+				option.text = motorista.nome;
+				option.value = motorista.cpf;
+				selectMotoristas.appendChild(option);
+			}
+
+		} catch (e) {
+			exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os motoristas cadastrados")
+		}
+
+	}
+
+	async function buscarVeiculos() {
+		try {
+			let response = await callApi("/veiculo")
+			if (response.status == 401) {
+				alert("login expirado")
+				goTo("/login")
+				return
+			}
+			if (!response.ok) {
+				exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os veiculos cadastrados")
+				return
+			}
+			window.veiculos = await response.json();
+			let selectVeiculos = document.getElementById("placa");
+
+			for (let veiculo of veiculos) {
+				let option = document.createElement("option");
+				option.text = veiculo.placa + " - " + veiculo.descricao;
+				option.value = veiculo.placa;
+				selectVeiculos.appendChild(option);
+			}
+
+		} catch (e) {
+			exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os motoristas cadastrados")
+		}
+	}
+
+	function resetarFormulario() {
+		document.getElementById("method").value = "post"
+		document.getElementById("id").value = ""
+		document.getElementById("solicitante").value = ""
+		document.getElementById("origem").value = ""
+		document.getElementById("destino").value = ""
+		document.getElementById("motorista").value = ""
+		document.getElementById("placa").value = ""
+		document.getElementById("data").value = ""
+		document.getElementById("valor").value = ""
+		document.getElementById("nf").value = ""
+		document.getElementById("carga").value = ""
+		document.getElementById("despesa").value = ""
+	}
+
+	async function editarViagem(id) {
+		try {
+			loadingStart();
+			let respostaApi = await callApi(`/viagem/${id}`)
+			if (respostaApi.status == 401) {
+				alert("login expirado")
+				goTo("/login")
+				return
+			}
+
+			if (!respostaApi.ok) {
+				exibirMensagemDeAviso(slotAvisos, "Não foi possível consultar os dados dessa viagem")
+				return
+			}
+			window.viagemAEditar = await respostaApi.json();
+			document.getElementById("method").value = "put"
+			document.getElementById("id").value = viagemAEditar.id
+			document.getElementById("solicitante").value = viagemAEditar.solicitante
+			document.getElementById("origem").value = viagemAEditar.origem
+			document.getElementById("destino").value = viagemAEditar.destino
+			document.getElementById("motorista").value = viagemAEditar.cpf_motorista
+			document.getElementById("placa").value = viagemAEditar.placa
+			document.getElementById("data").value = viagemAEditar.data_viagem
+			document.getElementById("valor").value = viagemAEditar.valor
+			document.getElementById("nf").value = viagemAEditar.nf
+			document.getElementById("carga").value = viagemAEditar.carga
+			document.getElementById("despesa").value = viagemAEditar.despesa;
+
+		} catch (error) {
+			exibirMensagemDeAviso("Desculpe, não foi possível trazer os dados dessa viagem. Tente novamente mais tarde.")
+		} finally {
+			loadingStop()
+		}
+	}
+
+	let formulario = document.querySelector("form");
+
+	formulario.addEventListener("submit", async (e) => {
+		e.preventDefault()
+		loadingStart()
+		let method = document.getElementById("method").value;
+		let id = document.getElementById("id").value;
+		let solicitante = document.getElementById("solicitante").value;
+		let origem = document.getElementById("origem").value;
+		let destino = document.getElementById("destino").value;
+		let cpf_motorista = document.getElementById("motorista").value;
+		let placa = document.getElementById("placa").value;
+		let data_viagem = document.getElementById("data").value;
+		let valor = document.getElementById("valor").value;
+		let nf = document.getElementById("nf").value;
+		let carga = document.getElementById("carga").value;
+		let despesa = document.getElementById("despesa").value;
+
+		let path = method === "put" ? `/viagem/${id}` : "/viagem"
+		let cpf_user = sessionStorage.getItem("user");
+
+		try {
+			var respostaApi = await callApi(path, {
+				method,
+				body: JSON.stringify({
+					solicitante,
+					origem,
+					destino,
+					cpf_motorista,
+					placa,
+					data_viagem,
+					valor,
+					nf,
+					carga,
+					despesa,
+					cpf_user
+				})
+			})
+
+			if (respostaApi.status == 401) {
+				alert("login expirado")
+				goTo("/login")
+				return
+			}
+
+			if (respostaApi.status == 400) {
+				let {message} = await respostaApi.json();
+				exibirMensagemDeAviso(slotAvisos, message)
+				return
+			}
+
+			if (!respostaApi.ok) {
+				exibirMensagemDeAviso(slotAvisos, "Não foi possível salvar os dados dessa viagem")
+				return
+			}
+			exibirMensagemDeSucesso(slotAvisos, "Viagem salva")
+			resetarFormulario()
+		} catch (error) {
+			alert("Desculpe, não foi possível cadastrar a viagem. Tente novamente mais tarde.")
+
+		} finally {
+			loadingStop()
+		}
+
+	});
+
+	(async function onLoad(){
+		loadingStart();
+		await buscarMotoristas()
+		await buscarVeiculos()
+
+		let queryString = new URLSearchParams(window.location.search);
+		if (!!queryString.get('id')) {
+			await editarViagem(queryString.get('id'))
+		}
+		preencheVeiculo()
+		loadingStop()
+	})()
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+        integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
+        crossorigin="anonymous"></script>
+
 </body>
 
 </html>
