@@ -107,57 +107,59 @@
 		<div class="offcanvas-body">
 			<ul class="navbar-nav justify-content-start pe-3">
 				<li class="nav-item d-block d-md-none">
-					<a class="nav-link" href="/viagens">Viagens</a>
+					<a class="nav-link disabled" href="/frete-avulso-front/viagens">Viagens</a>
 				</li>
 				<li class="nav-item d-block d-md-none">
-					<a class="nav-link active" href="/viagem">+ Viagem</a>
+					<a class="nav-link " href="/frete-avulso-front/viagem">+ Viagem</a>
 				</li>
 				<li class="nav-item d-block d-md-none">
-					<a class="nav-link" href="/motorista">+ Motorista</a>
+					<a class="nav-link" href="/frete-avulso-front/motorista">+ Motorista</a>
 				</li>
 				<li class="nav-item d-block d-md-none">
-					<a class="nav-link" href="/veiculo">+ Veículo</a>
+					<a class="nav-link" href="/frete-avulso-front/veiculos">+ Veículo</a>
 				</li>
 
 				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1" href="/viagens">Viagens</a>
+					<a class="btn btn-outline-dark mx-1 disabled" href="/frete-avulso-front/viagens">Viagens</a>
 				</li>
 				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1" href="/viagem">+ Viagem</a>
+					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/viagem">+ Viagem</a>
 				</li>
 				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1" href="/motorista">+ Motorista</a>
+					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/motorista">+ Motorista</a>
 				</li>
 				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1" href="/veiculo">+ Veículo</a>
+					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/veiculos">+ Veículo</a>
 				</li>
 			</ul>
 		</div>
 	</div>
 </nav>
 
-<main class="container mt-3">
+<main class="container-fluid container-md mt-3">
 	<div id="mensagem-erro"></div>
-	<section class="d-flex align-items-center justify-content-center mt-5">
-		<h1 class="h2">Viagens Realizadas</h1>
+	<section class="row d-flex mt-5">
+		<h1 class="h2 d-flex justify-content-center">Viagens Realizadas</h1>
 	</section>
-	<section class="d-flex flex-column align-items-center justify-content-center mt-9">
-		<table id="table-viagens" class="table table-responsive table-sm">
-			<thead>
-			<tr>
-				<th>ID</th>
-				<th>Data</th>
-				<th>Veículo</th>
-				<th>Origem</th>
-				<th>Destino</th>
-				<th>Desc. Carga</th>
-				<th>Valor</th>
-				<th></th>
-			</tr>
-			</thead>
-			<tbody>
-			</tbody>
-		</table>
+	<section class="row align-items-center justify-content-center mt-9">
+		<div class="table-responsive">
+			<table id="table-viagens" class="table align-middle table-striped table-hover table-responsive">
+				<thead>
+				<tr>
+					<th>ID</th>
+					<th>Data</th>
+					<th>Veículo</th>
+					<th>Origem</th>
+					<th>Destino</th>
+					<th>Desc. Carga</th>
+					<th>Valor</th>
+					<th></th>
+				</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+		</div>
 	</section>
 
 	<!-- Div do popup -->
@@ -173,7 +175,7 @@
 		</div>
 	</div>
 
-	<script>
+	<script lang="javascript">
 		function openPopup(id) {
 			let viagem = viagens.find(v => v.id == id)
 
@@ -189,7 +191,7 @@
 		        <li class='fas fa-box icon'></li> <strong>Desc. Carga:</strong> ${viagem.carga}<br>
 		        <li class='fas fa-dollar-sign icon'></li> <strong>Valor:</strong> ${viagem.valorFormatado}<br>
 		        <li class='fas fa-receipt icon'></li> <strong>Despesas:</strong> ${viagem.despesa}<br>
-				    <li class='fas fa-pencil-alt icon'></li><button class='btn btn-primary'>Editar</button>
+				    <li class='fas fa-pencil-alt icon'></li><button class='btn btn-primary' onclick="goTo('/viagem?id=${id}')">Editar</button>
         </ul>
 			`;
 
@@ -213,7 +215,7 @@
 					return
 				}
 				if (!response.ok) {
-					showAlert(document.querySelector("#mensagem-erro"), "warning", "Não foi possível localizar as viagens realizadas")
+					exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar as viagens realizadas")
 					return
 				}
 				window.viagens = await response.json();
@@ -235,7 +237,10 @@
 							<td data-title="Destino">${viagem.destino}</td>
 							<td data-title="Desc. Carga">${viagem.carga}</td>
 							<td data-title="Valor">${viagem.valorFormatado}</td>
-							<td><button class="btn btn-primary" onclick="openPopup(${viagem.id})">Mais</button></td>
+							<td>
+									<button class="btn btn-primary d-md-block d-none" onclick="openPopup(${viagem.id})">Mais</button>
+									<button class="btn btn-primary d-block d-md-none btn-sm" onclick="openPopup(${viagem.id})">+</button>
+							</td>
 						</tr>`
 				}
 

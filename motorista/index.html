@@ -1,25 +1,78 @@
 <!doctype html>
-<html lang="en" data-bs-theme="light">
+<html lang="pt">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title> Cadastro de motoristas </title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+	<script lang="javascript">
+		var appPath = "/frete-avulso-front";
+		var apiUrl = "https://frete-avulso-back-production-pi-drp03-pji110.svc-us3.zcloud.ws"
+
+		function goTo(path) {
+			location.href = location.origin + appPath + path;
+		}
+
+		function callApi(path, options) {
+			let token = sessionStorage.getItem("token")
+			options = {
+				...options,
+				headers: {
+					'content-type': "application/json",
+					Authorization: `Bearer ${token}`
+				}
+			}
+			return fetch(apiUrl + path, options)
+		}
+
+		var token = sessionStorage.getItem("token")
+		if (!token || token.length == 0) {
+			goTo("/login")
+		}
+	</script>
+
+	<style>
+		.overlay {
+			position: fixed;
+			width: 100%;
+			height: 100%;
+			top: 0;
+			left: 0;
+			background: #cccccc80;
+		}
+
+		.table-w-auto-ajust {
+			min-width: 100%;
+		}
+
+		@media (min-width: 576px) {
+			.table-w-auto-ajust {
+				min-width: 200px;
+			}
+		}
+
+		@media (min-width: 768px) {
+			.table-w-auto-ajust {
+				min-width: 400px;
+			}
+		}
+
+		@media (min-width: 992px) {
+			.table-w-auto-ajust {
+				min-width: 600px;
+			}
+		}
+
+		@media (min-width: 1200px) {
+			.table-w-auto-ajust {
+				min-width: 800px;
+			}
+		}
+	</style>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="./assets/css/estilo.css">
-    <style>
-        .overlay {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            background: #cccccc80;
-        }
-    </style>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script lang="javascript">
 
         function exibirMensagemDeErro(ancora, menssagem) {
@@ -58,48 +111,221 @@
         }
     </script>
 </head>
+<body>
+<nav class="navbar navbar-expand-lg bg-body-secondary">
+	<button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
+	        aria-controls="offcanvasNavbar">
+		<span class="navbar-toggler-icon"></span>
+	</button>
+	<div class="d-flex flex-grow-1 flex-md-grow-0 justify-content-center justify-content-md-start">
+		<h1 class="navbar-brand h-3"></h1>
+	</div>
+	<div class="offcanvas  offcanvas-start flex-grow-0" tabindex="-1" id="offcanvasNavbar"
+	     aria-labelledby="offcanvasNavbarLabel">
+		<div class="offcanvas-header">
+			<h5 class="offcanvas-title" id="offcanvasNavbarLabel">Menu</h5>
+			<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+		</div>
+		<div class="offcanvas-body">
+			<ul class="navbar-nav justify-content-start pe-3">
+				<li class="nav-item d-block d-md-none">
+					<a class="nav-link" href="/frete-avulso-front/viagens">Viagens</a>
+				</li>
+				<li class="nav-item d-block d-md-none">
+					<a class="nav-link " href="/frete-avulso-front/viagem">+ Viagem</a>
+				</li>
+				<li class="nav-item d-block d-md-none">
+					<a class="nav-link disabled" href="/frete-avulso-front/motorista">+ Motorista</a>
+				</li>
+				<li class="nav-item d-block d-md-none">
+					<a class="nav-link" href="/frete-avulso-front/veiculos">+ Veículo</a>
+				</li>
 
-<body class="align-items-center bg-body-tertiary">
-   
-    <div class="conteudo">
+				<li class="nav-item d-none d-md-block">
+					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/viagens">Viagens</a>
+				</li>
+				<li class="nav-item d-none d-md-block">
+					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/viagem">+ Viagem</a>
+				</li>
+				<li class="nav-item d-none d-md-block">
+					<a class="btn btn-outline-dark mx-1 disabled" href="/frete-avulso-front/motorista">+ Motorista</a>
+				</li>
+				<li class="nav-item d-none d-md-block">
+					<a class="btn btn-outline-dark mx-1 " href="/frete-avulso-front/veiculos">+ Veículo</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</nav>
+<main class="container-fluid container-md">
+	<div id="mensagem-erro" class="mt-3"></div>
+	<section class="d-flex align-items-center justify-content-center mt-5">
+		<h1 class="h2">Cadastro de Motoristas</h1>
+	</section>
+	<section>
+		<form>
+			<div class="row justify-content-md-center align-items-end">
+				<input type="hidden" name="method" id="method" value="post">
+				<div class="col-12 col-md-3 mt-3">
+					<label for="cpf" class="form-label">Cpf</label>
+					<input name="cpf" id="cpf" type="text" class="form-control text-uppercase" placeholder="000.000.000-00"
+					aria-label="cpf">
+				</div>
+				<div class="col-12 col-md-4 mt-3">
+					<label for="nome" class="form-label">Nome</label>
+					<input name="nome" id="nome" type="text" class="form-control" placeholder="Fulano"
+					       aria-label="nome">
+				</div>
+				<div class="col-12 col-md-1 mt-5 mt-md-2 d-grid d-md-flex">
+					<button type="submit" class="btn btn-primary">Salvar</button>
+				</div>
+				<div class="col-12 col-md-1 mt-5 mt-md-2 d-grid d-md-flex">
+					<button type="button" class="btn btn-warning" onclick="resetarFormulario()">Limpar</button>
+				</div>
+			</div>
+		</form>
+	</section>
 
-        <div class="imagem-form d-none d-md-flex" >
-            <img src="./imagens/undraw_delivery_truck_vt6p.svg">
-    
-        </div>
+	<section class="d-flex align-items-center justify-content-center mt-5">
+		<h1 class="h2">Motoristas cadastrados</h1>
+	</section>
 
-        <div class="form-cabecalho">
-            <form>
-                <div class="titulo">
-                    <h1> Cadastro de Motoristas </h1>
-                </div>
-                <div class="botoes-cima">
-                    <a type="submit" class="btn btn-primary" id="Viagem" href="/viagens"> + Viagem </a>
-                    <a type="submit" class="btn btn-primary" id="Veiculo" href="/veiculos"> + Veículo </a>
-                </div>
+	<section class="d-flex align-items-center justify-content-center">
+		<div class="table-responsive table-w-auto-ajust">
+			<table id="table-motoristas" class="table table-responsive table-striped table-hover">
+				<thead>
+				<tr>
+					<th scope="col">Cpf</th>
+					<th scope="col">Nome</th>
+					<th scope="col"></th>
+				</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+		</div>
+	</section>
+</main>
+<div class="overlay d-flex align-items-center justify-content-center d-none">
+	<div class="loading d-flex justify-content-center">
+		<div class="spinner-border text-primary spinner-border-sm" role="status"
+		     style="width: 3rem; height: 3rem;">
+		</div>
+	</div>
+</div>
+<script lang="javascript">
+	var slotAvisos = document.querySelector("#mensagem-erro")
 
-                <div class="grupo-inputs">
-                    <div class="input-nome d-flex flex-column">
-                        <label for="nome"> Nome </label>
-                        <input id="nome-completo" type="text" placeholder="Nome completo" required>
-                    </div>
-                    <div class="input-documento d-flex flex-column">
-                        <label for="cpf"> CPF </label>
-                        <input type="text" id="input-cpf" placeholder="Ex.: 000.000.000-00" size="14" maxlength="14"
-                            required>
-                    </div>
+	async function atualizaListaMotoristas() {
+		try {
+			loadingStart()
+			let response = await callApi("/motorista")
+			if (response.status == 401) {
+				alert("login expirado")
+				goTo("/login")
+				return
+			}
+			if (!response.ok) {
+				exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os motoristas cadastrados")
+				return
+			}
+			window.motoristas = await response.json();
 
-                </div>
+			let table = document.getElementById("table-motoristas")
+			let itens = ""
+			for (let motorista of motoristas) {
+					itens += `<tr>
+						  <td data-title="Cpf">${motorista.cpf}</td>
+						  <td data-title="Nome">${motorista.nome}</th>
+							<td>
+								  <button type="button" class="btn btn-sm btn-primary" onClick="editarMotorista('${motorista.cpf}')">
+									  <span class="d-md-block d-none">Editar</span>
+									  <i class='d-block d-md-none fas fa-pencil-alt icon'></i>
+								  </button>
+								  <!--<button type="button" class="btn btn-sm btn-danger" onClick="excluirMotorista(${motorista.cpf})">
+									  <span class="d-md-block d-none">Editar</span>
+									  <i class="d-block d-md-none fas fa-trash-alt icon"></i>
+								  </button> -->
+						  </td>
+					</tr>`
+			}
+			table.tBodies[0].innerHTML = itens
 
-                <div class="botao-cadastro">
-                    <a class="btn btn-primary" type="submit" id="botao-cadastro" href="/cadastrar"> Cadastrar </a>
-                </div>
-            </form>
-        </div>
+		} catch (e) {
+			exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os motoristas cadastrados")
+		} finally {
+			loadingStop()
+		}
+	}
+
+	function resetarFormulario() {
+		document.getElementById("method").value = "post"
+		document.getElementById("nome").value = ""
+		document.getElementById("cpf").value = ""
+		document.getElementById("cpf").removeAttribute("disabled")
+	}
+
+	function editarMotorista(cpf) {
+		let motorista = motoristas.find(m => m.cpf == cpf)
+		document.getElementById("method").value = "put"
+		document.getElementById("nome").value = motorista.nome
+		document.getElementById("cpf").value = cpf
+		document.getElementById("cpf").setAttribute("disabled", "")
+	}
+
+	let formulario = document.querySelector("form");
+
+	formulario.addEventListener("submit", async (e) => {
+		e.preventDefault()
+		loadingStart()
+		let method = document.getElementById("method").value
+		let nome = document.getElementById("nome").value
+		let cpf = document.getElementById("cpf").value.toUpperCase()
+		let path = method === "put" ? `/motorista/${cpf}` : "/motorista"
+
+		try {
+			var respostaApi = await callApi(path, {
+				method,
+				body: JSON.stringify({cpf, nome})
+			})
+
+			if (respostaApi.status == 401) {
+				alert("login expirado")
+				goTo("/login")
+				return
+			}
+
+			if (respostaApi.status == 400) {
+				let {message} = await respostaApi.json();
+				exibirMensagemDeAviso(slotAvisos, message)
+				return
+			}
+
+			if (!respostaApi.ok) {
+				exibirMensagemDeAviso(slotAvisos, "Não foi possível salvar os dados desse motorista")
+				return
+			}
+			exibirMensagemDeSucesso(slotAvisos, "Veículo salvo")
+			resetarFormulario()
+			await atualizaListaMotoristas()
+		} catch (error) {
+			alert("Desculpe, não foi possível possível salvar os dados desse motorista. Tente novamente mais tarde.")
+		} finally {
+			loadingStop()
+		}
+
+	})
 
 
-    </div>
-    <script src="./js/codigo.js"></script>
+	atualizaListaMotoristas()
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+        integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
+        crossorigin="anonymous"></script>
+
 </body>
 
 </html>
