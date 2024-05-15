@@ -184,8 +184,8 @@
 				</div>
 				<div class="col-12 col-md-3 mt-3">
 					<label for="cpf_motorista" class="form-label">Motorista</label>
-					<input name="cpf_motorista" id="cpf_motorista" type="text" class="form-control" placeholder="000.000.000-00"
-					       aria-label="cpf_motorista">
+					<select class="form-select" name="cpf_motorista" id="cpf_motorista" type="text" aria-label="cpf_motorista" >
+					</select>
 				</div>
 				<div class="col-12 col-md-1 mt-5 mt-md-2 d-grid d-md-flex">
 					<button type="submit" class="btn btn-primary">Salvar</button>
@@ -247,10 +247,11 @@
 			let itens = ""
 			for (let veiculo of veiculos) {
 				veiculo.cpf_motorista = veiculo.cpf_motorista ?? ""
+				veiculo.nome_motorista = motoristas.find(m => m.cpf == veiculo.cpf_motorista).nome;
 				itens += `<tr>
 						  <td data-title="Placa">${veiculo.placa}</th>
 							<td data-title="Descrição">${veiculo.descricao}</td>
-							<td data-title="Motorista">${veiculo.cpf_motorista}</td>
+							<td data-title="Motorista">${veiculo.nome_motorista}</td>
 						  <td>
 							  <button type="button" class="btn btn-sm btn-primary" onClick="editarVeiculo('${veiculo.placa}')">
 								  <span class="d-md-block d-none">Editar</span>
@@ -272,6 +273,39 @@
 			loadingStop()
 		}
 	}
+
+	async function buscarMotoristas() {
+			try {
+				let response = await callApi("/motorista")
+				if (response.status == 401) {
+					alert("login expirado")
+					goTo("/login")
+					return
+				}
+				if (!response.ok) {
+					exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os motoristas cadastrados")
+					return
+				}
+				window.motoristas = await response.json();
+				let selectMotoristas = document.getElementById("cpf_motorista");
+
+				let option = document.createElement("option");
+				option.text = "-";
+				option.value = "";
+				selectMotoristas.appendChild(option)
+
+				for (let motorista of motoristas) {
+					let option = document.createElement("option");
+					option.text = motorista.nome;
+					option.value = motorista.cpf;
+					selectMotoristas.appendChild(option);
+				}
+
+			} catch (e) {
+				exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os motoristas cadastrados")
+			}
+
+		}
 
 	function resetarFormulario() {
 		document.getElementById("method").value = "post"
@@ -337,7 +371,12 @@
 	;
 
 
-	atualizaListaVeiculos()
+	(async function onLoad() {
+		loadingStart();
+		await buscarMotoristas()
+		await atualizaListaVeiculos()
+		loadingStop()
+	})()
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
         integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
