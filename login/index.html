@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-bs-theme="light">
+<html lang="pt">
 <head>
 
 		<script lang="javascript">
@@ -154,6 +154,7 @@
 			let dadosLogin = await chamadaParaAPI(cpf, senha);
 			if (dadosLogin.status == 200){
 				sessionStorage.setItem("token", dadosLogin.data.access_token);
+				sessionStorage.setItem("user", cpf);
 				goTo("/viagens")
 			}
 			else{
