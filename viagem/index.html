@@ -275,11 +275,11 @@
 							</tbody>
 						</table>
 					</div>
-					<button class="btn btn-sm btn-secondary text-white m-2" type="button" onclick="abrirDespesa()">+ Despesa</button>
+					<button id="btn-despesa" class="btn btn-sm btn-secondary  m-2" disabled type="button" onclick="abrirDespesa()">+ Despesa</button>
 				</div>
 			</div>
 			<div class="d-flex flex-row mt-3 justify-content-between align-items-end">
-				<button class="btn btn-danger" type="button">Excluir</button>
+				<button class="btn btn-secondary" id="btn-excluir" type="button" disabled onclick="console.log">Excluir</button>
 				<button class="btn btn-primary" type="button" onclick="salvarViagem()">Salvar</button>
 			</div>
 		</form>
@@ -388,12 +388,26 @@
 		document.getElementById("btn-excluir").removeAttribute("disabled");
 	}
 
+	
+	function habilitaBtnDespesa(){
+		document.getElementById("btn-despesa").classList.add("btn-danger");
+		document.getElementById("btn-despesa").classList.remove("btn-secondary");
+		document.getElementById("btn-despesa").removeAttribute("disabled");
+	}
+
 	function desabilitaExcluir() {
-			document.getElementById("btn-excluir").removeAttribute("onclick");
-			document.getElementById("btn-excluir").classList.remove("btn-danger");
-			document.getElementById("btn-excluir").classList.add("btn-secondary");
-			document.getElementById("btn-excluir").setAttribute("disabled", "");
-		}
+		document.getElementById("btn-excluir").removeAttribute("onclick");
+		document.getElementById("btn-excluir").classList.remove("btn-danger");
+		document.getElementById("btn-excluir").classList.add("btn-secondary");
+		document.getElementById("btn-excluir").setAttribute("disabled", "");
+	}
+
+	
+	function desabilitaBtnDespesa(){
+		document.getElementById("btn-despesa").classList.remove("btn-danger");
+		document.getElementById("btn-despesa").classList.add("btn-secondary");
+		document.getElementById("btn-despesa").setAttribute("disabled", "");
+	}
 
 	function resetarFormulario() {
 		document.getElementById("method").value = "post"
@@ -407,9 +421,9 @@
 		document.getElementById("valor").value = ""
 		document.getElementById("nf").value = ""
 		document.getElementById("carga").value = ""
-		document.getElementById("despesa").value = ""
 
 		desabilitaExcluir()
+		desabilitaBtnDespesa()
 	}
 
 	async function editarViagem(id) {
@@ -442,6 +456,7 @@
 
 			await preencheTabelaDespesas(id)
 			habilitaExcluir(id)
+			habilitaBtnDespesa()
 
 		} catch (error) {
 			exibirMensagemDeAviso(slotAvisos, "Desculpe, não foi possível trazer os dados dessa viagem. Tente novamente mais tarde.")
@@ -542,7 +557,7 @@
 		let valor = document.querySelector(`form[name="despesa"] #valor`).value;
 		let cpf_user = sessionStorage.getItem("user");
 
-		let method = document.getElementById("method").value;
+		let method = document.querySelector(`form[name="despesa"] #method`).value;
 		let path = method === "put" ? `/despesa/${id}` : "/despesa"
 	
 
