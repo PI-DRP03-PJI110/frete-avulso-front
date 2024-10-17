@@ -60,3 +60,12 @@ ul {
     margin-right: 10px;
     color: #007bff;
 }
+
+@media print {
+    nav {
+        display: none!important;
+    }
+    body {
+        font-size: 80%;
+    }
+}
