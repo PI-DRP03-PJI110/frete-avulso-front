@@ -284,6 +284,23 @@
 			</div>
 		</form>
 	</section>
+	<div class="modal" id="modal-pos-salvar" tabindex="-1">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h1 class="modal-title fs-5">Salvo com sucesso!</h1>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<p>O que você deseja fazer?</p><p>Votlar para a listagem de viagens cadastradas?</p><p>Ou cadastrar uma nova viagem?</p>
+				</div>
+				<div class="modal-footer d-flex justify-content-between">
+					<button type="button" class="btn btn-secondary d-flex " onclick="goTo('/viagens')">Voltar para a Listagem</button>
+					<button type="button" class="btn btn-primary d-flex" onclick="goTo('/viagem')">Cadastrar novo</button>
+				</div>
+			</div>
+		</div>
+	</div>
 </main>
 
 <!-- Div do popup -->
@@ -364,6 +381,20 @@
 		}
 	}
 
+	function habilitaExcluir(id){
+		document.getElementById("btn-excluir").setAttribute("onclick", `excluirViagem(${id})`);
+		document.getElementById("btn-excluir").classList.add("btn-danger");
+		document.getElementById("btn-excluir").classList.remove("btn-secondary");
+		document.getElementById("btn-excluir").removeAttribute("disabled");
+	}
+
+	function desabilitaExcluir() {
+			document.getElementById("btn-excluir").removeAttribute("onclick");
+			document.getElementById("btn-excluir").classList.remove("btn-danger");
+			document.getElementById("btn-excluir").classList.add("btn-secondary");
+			document.getElementById("btn-excluir").setAttribute("disabled", "");
+		}
+
 	function resetarFormulario() {
 		document.getElementById("method").value = "post"
 		document.getElementById("id").value = ""
@@ -377,6 +408,8 @@
 		document.getElementById("nf").value = ""
 		document.getElementById("carga").value = ""
 		document.getElementById("despesa").value = ""
+
+		desabilitaExcluir()
 	}
 
 	async function editarViagem(id) {
@@ -397,7 +430,7 @@
 			window.viagemAEditar = await respostaApi.json();
 			document.getElementById("method").value = "put"
 			document.getElementById("id").value = viagemAEditar.id
-			document.getElementById("solicitante").value = viagemAEditar.solicitante
+			document.getElementById("solicitante").value = viagemAEditar.solicitante ?? ""
 			document.getElementById("origem").value = viagemAEditar.origem
 			document.getElementById("destino").value = viagemAEditar.destino
 			document.getElementById("motorista").value = viagemAEditar.cpf_motorista
@@ -408,6 +441,7 @@
 			document.getElementById("carga").value = viagemAEditar.carga;
 
 			await preencheTabelaDespesas(id)
+			habilitaExcluir(id)
 
 		} catch (error) {
 			exibirMensagemDeAviso(slotAvisos, "Desculpe, não foi possível trazer os dados dessa viagem. Tente novamente mais tarde.")
@@ -551,6 +585,34 @@
 			loadingStop()
 		}
 	}
+  
+	async function excluirViagem(id) {
+		if (window.confirm("Tem certeza que deseja excluir essa viagem? \nEssa operação é irreversível!")) {
+			try {
+				loadingStart();
+				let respostaApi = await callApi(`/viagem/${id}`,{method: 'delete'})
+				if (respostaApi.status == 401) {
+					alert("login expirado")
+					goTo("/login")
+					return
+				}
+
+				if (!respostaApi.ok) {
+					exibirMensagemDeAviso(slotAvisos, "Não foi possível excluir essa viagem")
+					return
+				}
+
+				alert('Excluído com sucesso');
+				loadingStop() ;
+				goTo("/viagens");
+
+			} catch (error) {
+				exibirMensagemDeAviso("Desculpe, Não foi possível excluir essa viagem. Tente novamente mais tarde.")
+				loadingStop();
+			}
+		}
+	}
+
 	let formulario = document.querySelector("form");
 
 	formulario.addEventListener("submit", async (e) => {
@@ -609,13 +671,17 @@
 				exibirMensagemDeAviso(slotAvisos, "Não foi possível salvar os dados dessa viagem")
 				return
 			}
-			exibirMensagemDeSucesso(slotAvisos, "Viagem salva")
-			resetarFormulario()
-		} catch (error) {
-			alert("Desculpe, não foi possível cadastrar a viagem. Tente novamente mais tarde.")
+			exibirMensagemDeSucesso(slotAvisos, "Viagem salva");
 
+			loadingStop();
+
+			let modalSucesso = new bootstrap.Modal(document.getElementById('modal-pos-salvar'), {});
+			modalSucesso.show();
+
+		} catch (error) {
+			exibirMensagemDeAviso("Desculpe, não foi possível cadastrar a viagem. Tente novamente mais tarde.");
 		} finally {
-			loadingStop()
+			loadingStop();
 		}
 
 	};
