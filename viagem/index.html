@@ -41,6 +41,7 @@
 	<style>
 		.overlay {
 			position: fixed;
+			z-index: 4;
 			width: 100%;
 			height: 100%;
 			top: 0;
@@ -52,6 +53,37 @@
 			min-width: 100%;
 		}
 
+		/* Estilos para o popup */
+		.popup {
+			display: none;
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			background-color: #fff;
+			padding: 20px;
+			border-radius: 10px;
+			box-shadow: 0 0 20px 10px rgba(0, 0, 0, 0.2);
+			max-width: 95%;
+			z-index: 3;
+			width: 500px;
+			border: solid 1px #909090;
+		}
+
+		/* Estilos para o botão de fechar */
+		.close {
+			position: absolute;
+			top: 10px;
+			right: 10px;
+			font-size: 20px;
+			color: #aaa;
+			cursor: pointer;
+		}
+
+		.close:hover {
+			color: #555;
+		}
+
 		@media (min-width: 576px) {
 			.table-w-auto-ajust {
 				min-width: 200px;
@@ -61,6 +93,9 @@
 		@media (min-width: 768px) {
 			.table-w-auto-ajust {
 				min-width: 400px;
+			}
+			.popup{
+				width: 800px;
 			}
 		}
 
@@ -218,7 +253,7 @@
 					<input name="nf" id="nf" type="text" class="form-control" aria-label="nf-e">
 				</div>
 			</div>
-			<div class="row justify-content-md-center align-items-end">
+			<div class="row justify-content-md-center align-items-start">
 				<div class="col-12 col-md mt-3">
 					<label for="carga" class="form-label">Carga</label>
 					<textarea name="carga" id="carga" class="form-control"
@@ -226,14 +261,26 @@
 				</div>
 
 				<div class="col-12 col-md mt-3">
-					<label for="despesa" class="form-label">Despesa</label>
-					<textarea name="despesa" id="despesa" class="form-control" placeholder="lançar despesas caso houver"
-					          aria-label="despesa"></textarea>
+					<span class="form-label">Despesa</span>
+					<div class=" table-responsive">
+						<table id="table-despesas" class="table align-middle table-striped table-hover table-sm table-responsive">
+							<thead>
+								<tr>
+									<th scope="col">Descrição</th>
+									<th scope="col">Valor</th>
+									<th scope="col"></th>
+								</tr>
+							</thead>
+							<tbody>
+							</tbody>
+						</table>
+					</div>
+					<button class="btn btn-sm btn-secondary text-white m-2" type="button" onclick="abrirDespesa()">+ Despesa</button>
 				</div>
 			</div>
 			<div class="d-flex flex-row mt-3 justify-content-between align-items-end">
-				<button class="btn btn-secondary" id="btn-excluir" type="button" disabled onclick="console.log">Excluir</button>
-				<button class="btn btn-primary" type="submit">Salvar</button>
+				<button class="btn btn-danger" type="button">Excluir</button>
+				<button class="btn btn-primary" type="button" onclick="salvarViagem()">Salvar</button>
 			</div>
 		</form>
 	</section>
@@ -255,6 +302,12 @@
 		</div>
 	</div>
 </main>
+
+<!-- Div do popup -->
+<div id="popup" class="popup">
+	<!-- Conteúdo do popup será preenchido dinamicamente -->
+</div>
+
 <div class="overlay d-flex align-items-center justify-content-center d-none">
 	<div class="loading d-flex justify-content-center">
 		<div class="spinner-border text-primary spinner-border-sm" role="status"
@@ -373,6 +426,7 @@
 				exibirMensagemDeAviso(slotAvisos, "Não foi possível consultar os dados dessa viagem")
 				return
 			}
+
 			window.viagemAEditar = await respostaApi.json();
 			document.getElementById("method").value = "put"
 			document.getElementById("id").value = viagemAEditar.id
@@ -384,18 +438,154 @@
 			document.getElementById("data").value = viagemAEditar.data_viagem
 			document.getElementById("valor").value = viagemAEditar.valor
 			document.getElementById("nf").value = viagemAEditar.nf
-			document.getElementById("carga").value = viagemAEditar.carga
-			document.getElementById("despesa").value = viagemAEditar.despesa;
-			
+			document.getElementById("carga").value = viagemAEditar.carga;
+
+			await preencheTabelaDespesas(id)
 			habilitaExcluir(id)
 
 		} catch (error) {
-			exibirMensagemDeAviso("Desculpe, não foi possível trazer os dados dessa viagem. Tente novamente mais tarde.")
+			exibirMensagemDeAviso(slotAvisos, "Desculpe, não foi possível trazer os dados dessa viagem. Tente novamente mais tarde.")
 		} finally {
 			loadingStop()
 		}
 	}
 
+	async function preencheTabelaDespesas(id){
+		
+		let tableDespesas = document.getElementById("table-despesas")
+
+		let respostaApidespesa = await callApi(`/viagem/${id}/despesas`)
+		if (respostaApidespesa.status == 401) {
+			alert("login expirado")
+			goTo("/login")
+			return
+		}
+
+		if (!respostaApidespesa.ok) {
+			exibirMensagemDeAviso(slotAvisos, "Não foi possível consultar os despesas dessa viagem")
+			return
+		}
+
+		window.viagemAEditar.despesas = await respostaApidespesa.json();
+		let itens = ""
+
+		for (let despesa of viagemAEditar.despesas) {
+			despesa.valorFormatado = despesa.valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})
+			itens += `<tr>
+						<td data-title="Descricao">${despesa.descricao}</td>
+						<td data-title="Valor">${despesa.valorFormatado}</td>
+						<td data-title="acao"><button class="btn btn-sm btn-primary" onclick="abrirDespesa(${despesa.ID})">
+							<li class="fas fa-pencil-alt icon"></li>
+						</button></td>
+					</tr>`
+		}
+
+		tableDespesas.tBodies[0].innerHTML = itens
+	}
+
+	function abrirDespesa(id) {
+		let ID_viagem = document.getElementById("id").value
+		document.getElementById("popup").innerHTML = `
+				<form name="despesa">
+					<div class="row justify-content-md-center">
+						<h2>Cadastro de despesa </h2>
+					</div>
+					<div class="row justify-content-md-center align-items-end">
+						<input type="hidden" name="method" id="method" value="post">
+						<input type="hidden" name="id" id="id">
+						<input type="hidden" name="ID_viagem" id="ID_viagem" value="${ID_viagem}">
+						<div class="col-12 col-md mt-3">
+							<label for="descricao" class="form-label">Descrição</label>
+							<input name="descricao" id="descricao" type="text" class="form-control" placeholder="Descrição da despesa"
+							       aria-label="descricao">
+						</div>
+						<div class="col-12 col-md-3 mt-3">
+							<label for="valor" class="form-label">Valor</label>
+							<div class="input-group">
+								<span class="input-group-text">$</span>
+								<input name="valor" id="valor" type="number" step="any" class="form-control" placeholder="00.0000,00"
+							       aria-label="valor">
+							</div>
+						</div>
+					</div>
+					<div class="row justify-content-end align-items-end">
+						<div class="col-12 col-md-3 justify-content-end align-items-end text-end">
+							<button class="btn btn-sm btn-primary m-2" type="button" onclick="salvarDespesa()">Salvar</button>
+						</div>
+					</div>
+				</form>
+			`;
+		// Adicionando botão de fechar após carregar o conteúdo do popup
+		document.getElementById("popup").innerHTML += "<span class='close' onclick='closePopup()'> X</span>";
+		if(!!id){
+			document.querySelector(`form[name="despesa"] #id`).value = id
+			document.querySelector(`form[name="despesa"] #method`).value = "put"
+			
+			let desp = window.viagemAEditar.despesas.find(d => d.ID == id);
+			document.querySelector(`form[name="despesa"] #descricao`).value = desp.descricao;
+			document.querySelector(`form[name="despesa"] #valor`).value = desp.valor;
+
+		}
+		document.getElementById("popup").style.display = "block";
+		
+	}
+
+	function closePopup() {
+		document.getElementById("popup").style.display = "none";
+	}
+
+	async function salvarDespesa(){
+		loadingStart()
+		let descricao = document.querySelector(`form[name="despesa"] #descricao`).value
+		let ID_viagem = document.querySelector(`form[name="despesa"] #ID_viagem`).value
+		let id = document.querySelector(`form[name="despesa"] #id`).value
+		let valor = document.querySelector(`form[name="despesa"] #valor`).value;
+		let cpf_user = sessionStorage.getItem("user");
+
+		let method = document.getElementById("method").value;
+		let path = method === "put" ? `/despesa/${id}` : "/despesa"
+	
+
+		try {
+			var respostaApi = await callApi(path, {
+				method,
+				body: JSON.stringify({
+					ID_despesa: id,
+					descricao,
+					valor,
+					ID_viagem,
+					cpf_user
+				})
+			})
+
+			if (respostaApi.status == 401) {
+				alert("login expirado")
+				goTo("/login")
+				return
+			}
+
+			if (respostaApi.status == 400) {
+				let {message} = await respostaApi.json();
+				exibirMensagemDeAviso(slotAvisos, message)
+				return
+			}
+
+			if (!respostaApi.ok) {
+				exibirMensagemDeAviso(slotAvisos, "Não foi possível salvar os dados dessa viagem")
+				return
+			}
+			exibirMensagemDeSucesso(slotAvisos, "Despesa salva")
+			closePopup()
+			await preencheTabelaDespesas(ID_viagem)
+			
+		} catch (error) {
+			alert("Desculpe, não foi possível cadastrar a viagem. Tente novamente mais tarde.")
+
+		} finally {
+			loadingStop()
+		}
+	}
+  
 	async function excluirViagem(id) {
 		if (window.confirm("Tem certeza que deseja excluir essa viagem? \nEssa operação é irreversível!")) {
 			try {
@@ -427,6 +617,10 @@
 
 	formulario.addEventListener("submit", async (e) => {
 		e.preventDefault()
+	});
+
+	async function salvarViagem() {
+		
 		loadingStart()
 		let method = document.getElementById("method").value;
 		let id = document.getElementById("id").value;
@@ -439,7 +633,6 @@
 		let valor = document.getElementById("valor").value;
 		let nf = document.getElementById("nf").value;
 		let carga = document.getElementById("carga").value;
-		let despesa = document.getElementById("despesa").value;
 
 		let path = method === "put" ? `/viagem/${id}` : "/viagem"
 		let cpf_user = sessionStorage.getItem("user");
@@ -491,7 +684,7 @@
 			loadingStop();
 		}
 
-	});
+	};
 
 	(async function onLoad(){
 		loadingStart();
