@@ -37,6 +37,7 @@
 	      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
+	<link rel="stylesheet" href="../dark.css">
 
 	<style>
 		.overlay {
@@ -162,6 +163,14 @@
 			</ul>
 		</div>
 	</div>
+	<div class="d-flex align-self-auto mx-auto">
+	</div>
+	<div class="d-flex justify-content-md-end me-3">
+		<div class="form-check form-switch">
+			<input class="form-check-input" type="checkbox" role="switch" id="switch-theme" onclick="toggleThemeInput(this)">
+			<label class="form-check-label" for="switch-theme">Modo escuro</label>
+		</div>
+	</div>
 </nav>
 <main class="container-fluid container-md">
 	<div id="mensagem-erro" class="mt-3"></div>
@@ -226,6 +235,28 @@
 	</div>
 </div>
 <script lang="javascript">
+
+	function toggleThemeInput(e){
+		sessionStorage.setItem("darktheme", e.checked)
+		if(e.checked){
+			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "dark")
+		}
+		else {
+			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "light")
+		}
+	}
+	(function init(){
+		let isDark = sessionStorage.getItem("darktheme") === 'true'
+
+		document.getElementById("switch-theme").checked = isDark;
+		if(isDark){
+			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "dark")
+		}
+		else {
+			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "light")
+		}
+	})()
+
 	var slotAvisos = document.querySelector("#mensagem-erro")
 
 	async function atualizaListaVeiculos() {

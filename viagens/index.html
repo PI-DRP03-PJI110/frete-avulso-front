@@ -38,6 +38,7 @@
 
 	<!-- Custom styles for this template -->
 	<link rel="stylesheet" href="styles.css">
+	<link rel="stylesheet" href="../dark.css">
 
 	<style>
 		.overlay {
@@ -134,6 +135,14 @@
 			</ul>
 		</div>
 	</div>
+	<div class="d-flex align-self-auto mx-auto">
+	</div>
+	<div class="d-flex justify-content-md-end me-3">
+		<div class="form-check form-switch">
+			<input class="form-check-input" type="checkbox" role="switch" id="switch-theme" onclick="toggleThemeInput(this)">
+			<label class="form-check-label" for="switch-theme">Modo escuro</label>
+		</div>
+	</div>
 </nav>
 
 <main class="container-fluid container-md mt-3">
@@ -181,6 +190,28 @@
 	</div>
 
 	<script lang="javascript">
+
+		function toggleThemeInput(e){
+			sessionStorage.setItem("darktheme", e.checked)
+			if(e.checked){
+				document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "dark")
+			}
+			else {
+				document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "light")
+			}
+		}
+		(function init(){
+			let isDark = sessionStorage.getItem("darktheme") === 'true'
+
+			document.getElementById("switch-theme").checked = isDark;
+			if(isDark){
+				document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "dark")
+			}
+			else {
+				document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "light")
+			}
+		})()
+
 		function openPopup(id) {
 			let viagem = viagens.find(v => v.id == id)
 
