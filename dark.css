@@ -1,0 +1,12 @@
+
+body[data-bs-theme="dark"] .btn-outline-dark{
+    border-color: #909090;
+    color: #ffffff !important;
+}
+body[data-bs-theme="dark"] .btn-outline-dark:hover{
+    border-color: #ffffff !important;;
+    color: #ffffff !important;
+}
+body[data-bs-theme="dark"] .popup{
+    background-color: #2c3034;
+}
