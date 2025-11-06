@@ -1,311 +1,919 @@
 <!DOCTYPE html>
 <html lang="pt">
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="">
-	<title>Viagens realizadas</title>
+  <head>
+    <meta charset="utf-8" />
+    <title>Viagens realizadas • Gestão de viagens</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-	<script lang="javascript">
-		var appPath = "/frete-avulso-front";
-		var apiUrl = "https://frete-avulso-back.onrender.com"
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+      rel="stylesheet"
+    />
 
-		function goTo(path) {
-			location.href = location.origin + appPath + path;
-		}
+    <link rel="stylesheet" href="../dark.css" />
+    <link rel="stylesheet" href="../public/header.css" />
 
-		function callApi(path, options) {
-			let token = sessionStorage.getItem("token")
-			options = {
-				...options,
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			}
-			return fetch(apiUrl + path, options)
-		}
+    <script>
+      window.APP_PATH = "/frete-avulso-front";
+      window.API_URL =
+        location.hostname === "localhost" || location.hostname === "127.0.0.1"
+          ? "http://127.0.0.1:5000"
+          : "https://frete-avulso-back.onrender.com";
+    </script>
+    <script src="../auth.js"></script>
+    <script>
+      (async () => {
+        await window.__AUTH__.requireAuth();
+      })();
+    </script>
 
-		var token = sessionStorage.getItem("token")
-		if (!token || token.length == 0) {
-			goTo("/login")
-		}
-	</script>
+    <style>
+      :root {
+        --card-radius: 16px;
+        --shadow-1: 0 8px 24px rgba(0, 0, 0, 0.08);
+        --shadow-2: 0 14px 36px rgba(0, 0, 0, 0.14);
+      }
+      [data-bs-theme="dark"] {
+        --shadow-1: 0 8px 24px rgba(0, 0, 0, 0.45);
+        --shadow-2: 0 14px 36px rgba(0, 0, 0, 0.6);
+      }
 
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-	      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+      :focus {
+        outline: 2px solid
+          color-mix(in srgb, var(--bs-primary), transparent 55%);
+        outline-offset: 2px;
+      }
 
+      main {
+        margin-top: var(--app-header-h, 64px);
+      }
+      .page-wrap {
+        max-width: 1100px;
+        padding-block: clamp(14px, 2vw, 24px);
+      }
 
-	<!-- Custom styles for this template -->
-	<link rel="stylesheet" href="styles.css">
-	<link rel="stylesheet" href="../dark.css">
+      .page-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin: 0.25rem 0 0.5rem;
+      }
+      .page-title {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 0;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .page-title .title-icon {
+        display: inline-grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--bs-primary), transparent 86%);
+        border: 1px solid var(--bs-border-color);
+      }
+      .page-title .title-icon i {
+        font-size: 1.05rem;
+        opacity: 0.9;
+      }
 
-	<style>
-		.overlay {
-			position: fixed;
-			width: 100%;
-			height: 100%;
-			top: 0;
-			left: 0;
-			background: #cccccc80;
-		}
-	</style>
-	<script lang="javascript">
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.25);
+      }
 
-		function exibirMensagemDeErro(ancora, menssagem) {
-			exibirAlerta(ancora, 'danger', menssagem)
-		}
+      .grid-cards {
+        display: grid;
+        gap: 1rem;
+      }
+      @media (min-width: 576px) {
+        .grid-cards {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (min-width: 992px) {
+        .grid-cards {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
 
-		function exibirMensagemDeAviso(ancora, menssagem) {
-			exibirAlerta(ancora, 'warning', menssagem)
-		}
+      .card-viagem {
+        border: 1px solid var(--bs-border-color);
+        border-radius: var(--card-radius);
+        background: var(--bs-body-bg);
+        box-shadow: var(--shadow-1);
+        transition: transform 0.12s ease, box-shadow 0.12s ease,
+          border-color 0.12s ease;
+      }
+      .card-viagem:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-2);
+        border-color: color-mix(
+          in srgb,
+          var(--bs-border-color),
+          var(--bs-primary) 10%
+        );
+      }
+      [data-bs-theme="dark"] .card-viagem {
+        background: rgba(28, 31, 35, 0.92);
+        backdrop-filter: saturate(120%) blur(6px);
+      }
 
-		function exibirMensagemDeSucesso(ancora, menssagem) {
-			exibirAlerta(ancora, 'success', menssagem)
-		}
+      .card-viagem .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+      }
 
-		function exibirAlerta(ancora, tipo, menssagem) {
-			const wrapper = document.createElement('div')
-			wrapper.innerHTML = [
-				`<div class="alert alert-${tipo} alert-dismissible alert-dismissible fade show d-flex align-items-center" role="alert">`,
-				`   <div>${menssagem}</div>`,
-				'   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
-				'</div>'
-			].join('')
-			ancora.append(wrapper)
-		}
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.18rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        border: 1px solid transparent;
+      }
+      .chip-muted {
+        background: var(--bs-secondary-bg);
+        color: var(--bs-secondary-color);
+        border-color: rgba(0, 0, 0, 0.05);
+      }
+      .chip-accent {
+        background: var(--bs-primary-bg-subtle);
+        color: var(--bs-primary-text);
+        border-color: rgba(13, 110, 253, 0.15);
+      }
+      .chip-money {
+        background: var(--bs-success-bg-subtle);
+        color: var(--bs-success-text);
+        border-color: rgba(25, 135, 84, 0.12);
+      }
 
-		function loadingStart() {
-			let overlay = document.querySelector(`div.overlay`);
-			overlay.classList.remove("d-none");
-			overlay.classList.add("d-flex");
-		}
+      .kv {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+      @media (min-width: 576px) {
+        .kv {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      .kv-item {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        background: var(--bs-secondary-bg);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 0.75rem;
+        padding: 0.6rem 0.8rem;
+      }
+      .kv-item i {
+        opacity: 0.7;
+      }
 
-		function loadingStop() {
-			let overlay = document.querySelector(`div.overlay`);
-			overlay.classList.add("d-none");
-			overlay.classList.remove("d-flex");
-		}
-	</script>
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        background: var(--bs-secondary-bg);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+      }
+      .list-compact .list-group-item {
+        padding: 0.45rem 0.75rem;
+      }
 
-</head>
-<body>
+      .filters-card {
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: 14px;
+        padding: 0.9rem;
+        margin-top: 0.5rem;
+        box-shadow: var(--shadow-1);
+      }
+      [data-bs-theme="dark"] .filters-card {
+        background: rgba(28, 31, 35, 0.92);
+        backdrop-filter: saturate(120%) blur(6px);
+      }
+      #form-filtros .bi-search {
+        pointer-events: none;
+        color: var(--bs-secondary-color);
+      }
+      #btn-adv-toggle[aria-expanded="true"] .bi-sliders2::before {
+        content: "\F3EA";
+      }
 
-<nav class="navbar navbar-expand-lg bg-body-secondary d-print-none">
-	<button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-	        aria-controls="offcanvasNavbar">
-		<span class="navbar-toggler-icon"></span>
-	</button>
-	<div class="d-flex flex-grow-1 flex-md-grow-0 justify-content-center justify-content-md-start">
-		<h1 class="navbar-brand h-3"></h1>
-	</div>
-	<div class="offcanvas offcanvas-start flex-grow-0" tabindex="-1" id="offcanvasNavbar"
-	     aria-labelledby="offcanvasNavbarLabel">
-		<div class="offcanvas-header">
-			<h5 class="offcanvas-title" id="offcanvasNavbarLabel">Menu</h5>
-			<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-		</div>
-		<div class="offcanvas-body">
-			<ul class="navbar-nav justify-content-start pe-3">
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link disabled" href="/frete-avulso-front/viagens">Viagens</a>
-				</li>
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link " href="/frete-avulso-front/viagem">+ Viagem</a>
-				</li>
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link" href="/frete-avulso-front/motorista">+ Motorista</a>
-				</li>
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link" href="/frete-avulso-front/veiculos">+ Veículo</a>
-				</li>
+      /* Card "Nova viagem" */
+      .card-new {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 0.6rem;
+        min-height: 120px;
+        padding: 1.25rem;
+        cursor: pointer;
+        user-select: none;
+        border-style: dashed;
+        border-width: 2px;
+        background: color-mix(in srgb, var(--bs-secondary-bg), transparent 20%);
+      }
+      .card-new i {
+        font-size: 1.6rem;
+      }
+      .card-new .label {
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .card-new:focus {
+        outline: 2px dashed
+          color-mix(in srgb, var(--bs-primary), transparent 45%);
+        outline-offset: 3px;
+      }
+      .card-new:hover {
+        background: color-mix(in srgb, var(--bs-secondary-bg), transparent 5%);
+      }
 
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1 disabled" href="/frete-avulso-front/viagens">Viagens</a>
-				</li>
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/viagem">+ Viagem</a>
-				</li>
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/motorista">+ Motorista</a>
-				</li>
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/veiculos">+ Veículo</a>
-				</li>
-			</ul>
-		</div>
-	</div>
-	<div class="d-flex align-self-auto mx-auto">
-	</div>
-	<div class="d-flex justify-content-md-end me-3">
-		<div class="form-check form-switch">
-			<input class="form-check-input" type="checkbox" role="switch" id="switch-theme" onclick="toggleThemeInput(this)">
-			<label class="form-check-label" for="switch-theme">Modo escuro</label>
-		</div>
-	</div>
-</nav>
+      @media print {
+        .d-print-none {
+          display: none !important;
+        }
+        .grid-cards {
+          grid-template-columns: 1fr;
+        }
+        .card-viagem {
+          box-shadow: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app-header"></div>
 
-<main class="container-fluid container-md mt-3">
-	<div id="mensagem-erro"></div>
-	<section class="row d-flex mt-5">
-		<h1 class="h2 d-flex justify-content-center">Viagens Realizadas</h1>
-	</section>
-	<section class="row d-flex mt-5 justify-content-end d-print-none">
-		<span class="d-flex justify-content-end">
-			<button type="button" class="btn btn-outline-info" onclick="print()">Imprimir <i class="fa fa-print"></i></button>
-		</span>
-	</section>
-	<section class="row align-items-center justify-content-center mt-9">
-		<div class="table-responsive">
-			<table id="table-viagens" class="table align-middle table-striped table-hover table-responsive">
-				<thead>
-				<tr>
-					<th>ID</th>
-					<th>Data</th>
-					<th>Veículo</th>
-					<th>Origem</th>
-					<th>Destino</th>
-					<th>Desc. Carga</th>
-					<th>Valor</th>
-					<th class="d-print-none"></th>
-				</tr>
-				</thead>
-				<tbody>
-				</tbody>
-			</table>
-		</div>
-	</section>
+    <main
+      id="main"
+      class="container page-wrap"
+      role="main"
+      tabindex="-1"
+      aria-labelledby="page-title"
+    >
+      <div id="mensagem-erro" aria-live="assertive"></div>
 
-	<!-- Div do popup -->
-	<div id="popup" class="popup">
-		<!-- Conteúdo do popup será preenchido dinamicamente -->
-	</div>
+      <section class="page-head d-print-none">
+        <h2 id="page-title" class="page-title h4">
+          <span class="title-icon" aria-hidden="true"
+            ><i class="bi bi-signpost-2"></i
+          ></span>
+          Viagens realizadas
+        </h2>
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          onclick="print()"
+          aria-label="Imprimir página"
+        >
+          <i class="bi bi-printer" aria-hidden="true"></i>
+        </button>
+      </section>
 
-	<div class="overlay d-flex align-items-center justify-content-center d-none">
-		<div class="loading d-flex justify-content-center">
-			<div class="spinner-border text-primary spinner-border-sm" role="status"
-			     style="width: 3rem; height: 3rem;">
-			</div>
-		</div>
-	</div>
+      <section class="filters-card d-print-none">
+        <form id="form-filtros" class="row g-2">
+          <div class="col-12 d-flex gap-2">
+            <div class="flex-grow-1 position-relative">
+              <i
+                class="bi bi-search position-absolute top-50 translate-middle-y ms-3"
+                aria-hidden="true"
+              ></i>
+              <input
+                type="text"
+                class="form-control ps-5"
+                id="f-busca"
+                placeholder="Buscar por ID, carga, motorista, origem/destino..."
+                aria-label="Busca livre"
+              />
+            </div>
 
-	<script lang="javascript">
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#advFilters"
+              aria-expanded="false"
+              aria-controls="advFilters"
+              id="btn-adv-toggle"
+            >
+              <span class="me-1"><i class="bi bi-sliders2"></i></span>
+              Filtros
+              <span id="badgeActiveFilters" class="badge text-bg-secondary ms-1"
+                >0</span
+              >
+            </button>
 
-		function toggleThemeInput(e){
-			sessionStorage.setItem("darktheme", e.checked)
-			if(e.checked){
-				document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "dark")
-			}
-			else {
-				document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "light")
-			}
-		}
-		(function init(){
-			let isDark = sessionStorage.getItem("darktheme") === 'true'
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <button
+              type="button"
+              id="btn-limpar"
+              class="btn btn-outline-secondary"
+            >
+              Limpar
+            </button>
+          </div>
 
-			document.getElementById("switch-theme").checked = isDark;
-			if(isDark){
-				document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "dark")
-			}
-			else {
-				document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "light")
-			}
-		})()
+          <div class="col-12">
+            <div class="collapse mt-2" id="advFilters">
+              <div class="row g-2">
+                <div class="col-6 col-md-2">
+                  <label class="form-label" for="f-data-inicio"
+                    >Data início</label
+                  >
+                  <input type="date" class="form-control" id="f-data-inicio" />
+                </div>
+                <div class="col-6 col-md-2">
+                  <label class="form-label" for="f-data-fim">Data fim</label>
+                  <input type="date" class="form-control" id="f-data-fim" />
+                </div>
+                <div class="col-6 col-md-2">
+                  <label class="form-label" for="f-placa">Placa</label>
+                  <select id="f-placa" class="form-select">
+                    <option value="">Todas</option>
+                  </select>
+                </div>
+                <div class="col-6 col-md-2">
+                  <label class="form-label" for="f-origem">Origem</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="f-origem"
+                    placeholder="Origem"
+                  />
+                </div>
+                <div class="col-6 col-md-2">
+                  <label class="form-label" for="f-destino">Destino</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="f-destino"
+                    placeholder="Destino"
+                  />
+                </div>
+                <div class="col-6 col-md-2">
+                  <label class="form-label" for="f-nf">NF-e</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="f-nf"
+                    placeholder="NF-e"
+                  />
+                </div>
+                <div class="col-6 col-md-2">
+                  <label class="form-label" for="f-valor-min">Valor mín</label>
+                  <input
+                    type="number"
+                    step="any"
+                    class="form-control"
+                    id="f-valor-min"
+                    placeholder="0"
+                  />
+                </div>
+                <div class="col-6 col-md-2">
+                  <label class="form-label" for="f-valor-max">Valor máx</label>
+                  <input
+                    type="number"
+                    step="any"
+                    class="form-control"
+                    id="f-valor-max"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </section>
 
-		function openPopup(id) {
-			let viagem = viagens.find(v => v.id == id)
+      <section class="mt-3">
+        <div id="lista-viagens" class="grid-cards"></div>
+      </section>
 
-			document.getElementById("popup").innerHTML = `
-				<ul>
-		        <li class='fas fa-circle icon'></li> <strong>ID:</strong> ${viagem.id}<br>
-		        <li class='fas fa-user icon'></li> <strong>Solicitante:</strong> ${viagem.solicitante ?? ""}<br>
-		        <li class='far fa-calendar-alt icon'></li> <strong>Data:</strong> ${viagem.dataFormatada}<br>
-		        <li class='fas fa-file-invoice-dollar icon'></li> <strong>NF-e:</strong> ${viagem.nf}<br>
-		        <li class='fas fa-truck-moving icon'></li> <strong>Motorista:</strong> ${viagem.cpf_motorista}<br>
-		        <li class='fas fa-car icon'></li> <strong>Veículo:</strong> ${viagem.placa}<br>
-		        <li class='fas fa-map-marker-alt icon'></li> <strong>Origem:</strong> ${viagem.origem}<br>
-		        <li class='fas fa-map-marker-alt icon'></li> <strong>Destino:</strong> ${viagem.destino}<br>
-		        <li class='fas fa-box icon'></li> <strong>Desc. Carga:</strong> ${viagem.carga}<br>
-		        <li class='fas fa-dollar-sign icon'></li> <strong>Valor:</strong> ${viagem.valorFormatado}<br>
-				    <li class='fas fa-pencil-alt icon'></li><button class='btn btn-primary' onclick="goTo('/viagem/?id=${id}')">Editar</button>
-        </ul>
-			`;
+      <div
+        class="overlay d-flex align-items-center justify-content-center d-none"
+        aria-hidden="true"
+      >
+        <div class="loading d-flex justify-content-center">
+          <div
+            class="spinner-border text-primary spinner-border-sm"
+            role="status"
+            aria-label="Carregando"
+            style="width: 3rem; height: 3rem"
+          ></div>
+        </div>
+      </div>
+    </main>
 
-			document.getElementById("popup").style.display = "block";
-			// Adicionando botão de fechar após carregar o conteúdo do popup
-			document.getElementById("popup").innerHTML += "<span class='close' onclick='closePopup()'> X</span>";
+    <div class="modal fade" id="modalDetalhe" tabindex="-1" aria-hidden="true">
+      <div
+        class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable"
+      >
+        <div class="modal-content">
+          <div class="modal-header">
+            <div class="d-flex align-items-center gap-2">
+              <h5 class="modal-title" id="modalTitulo">Detalhes da viagem</h5>
+              <span id="badgeId" class="badge text-bg-secondary"></span>
+            </div>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Fechar"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div id="detalheLoading" class="d-flex align-items-center gap-2">
+              <div
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></div>
+              <span>Carregando…</span>
+            </div>
+            <div id="conteudoDetalhe" class="d-none">
+              <div class="mb-3 d-flex flex-wrap gap-2">
+                <span id="chipData" class="pill"
+                  ><i class="bi bi-calendar-event"></i><span></span
+                ></span>
+                <span id="chipValor" class="pill"
+                  ><i class="bi bi-cash-coin"></i><span></span
+                ></span>
+                <span id="chipNF" class="pill"
+                  ><i class="bi bi-receipt"></i><span></span
+                ></span>
+              </div>
+              <div class="kv mb-3">
+                <div class="kv-item">
+                  <i class="bi bi-person-badge"></i>
+                  <div>
+                    <small class="text-secondary d-block">Solicitante</small
+                    ><strong id="kvSolicitante">-</strong>
+                  </div>
+                </div>
+                <div class="kv-item">
+                  <i class="bi bi-person-vcard"></i>
+                  <div>
+                    <small class="text-secondary d-block">Motorista</small
+                    ><strong id="kvMotorista">-</strong>
+                  </div>
+                </div>
+                <div class="kv-item">
+                  <i class="bi bi-truck"></i>
+                  <div>
+                    <small class="text-secondary d-block">Veículo</small
+                    ><strong id="kvPlaca">-</strong>
+                  </div>
+                </div>
+                <div class="kv-item">
+                  <i class="bi bi-box"></i>
+                  <div>
+                    <small class="text-secondary d-block">Carga</small
+                    ><strong id="kvCarga">-</strong>
+                  </div>
+                </div>
+                <div class="kv-item">
+                  <i class="bi bi-geo-alt"></i>
+                  <div>
+                    <small class="text-secondary d-block">Origem</small
+                    ><strong id="kvOrigem">-</strong>
+                  </div>
+                </div>
+                <div class="kv-item">
+                  <i class="bi bi-flag"></i>
+                  <div>
+                    <small class="text-secondary d-block">Destino</small
+                    ><strong id="kvDestino">-</strong>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h6 class="mb-2">
+                  <i class="bi bi-receipt-cutoff me-1"></i>Despesas
+                </h6>
+                <ul id="listaDespesas" class="list-group list-compact"></ul>
+                <div id="semDespesas" class="text-secondary">
+                  Sem despesas cadastradas.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer justify-content-between">
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              data-bs-dismiss="modal"
+            >
+              Fechar
+            </button>
+            <a id="btnEditar" href="#" class="btn btn-primary">Editar</a>
+          </div>
+        </div>
+      </div>
+    </div>
 
-		}
+    <script>
+      (function initTheme() {
+        const isDark = sessionStorage.getItem("darktheme") === "true";
+        document.body.setAttribute("data-bs-theme", isDark ? "dark" : "light");
+      })();
 
-		function closePopup() {
-			document.getElementById("popup").style.display = "none";
-		}
+      function exibirAlerta(ancora, tipo, mensagem) {
+        const w = document.createElement("div");
+        w.innerHTML = [
+          `<div class="alert alert-${tipo} alert-dismissible fade show d-flex align-items-center" role="alert" aria-live="assertive" aria-atomic="true" tabindex="-1">`,
+          `<div>${mensagem}</div>`,
+          `<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>`,
+          `</div>`,
+        ].join("");
+        const el = w.firstChild;
+        ancora.innerHTML = "";
+        ancora.append(el);
+        el.focus();
+      }
+      const exibirMensagemDeAviso = (a, m) => exibirAlerta(a, "warning", m);
 
-		async function atualizaViagens() {
-			try {
-				loadingStart()
-				let response = await callApi("/viagem")
-				if (response.status == 401){
-					alert("login expirado")
-					goTo("/login")
-					return
-				}
-				if (!response.ok) {
-					exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar as viagens realizadas")
-					return
-				}
-				window.viagens = await response.json();
+      function loadingStart() {
+        const o = document.querySelector("div.overlay");
+        o.classList.remove("d-none");
+        o.classList.add("d-flex");
+        o.setAttribute("aria-busy", "true");
+        o.removeAttribute("aria-hidden");
+      }
+      function loadingStop() {
+        const o = document.querySelector("div.overlay");
+        o.classList.add("d-none");
+        o.classList.remove("d-flex");
+        o.removeAttribute("aria-busy");
+        o.setAttribute("aria-hidden", "true");
+      }
 
-				let table = document.getElementById("table-viagens")
+      let viagens = [],
+        viagensFiltradas = [];
 
-				let itens = ""
-				for (let viagem of viagens.reverse()) {
-					viagem.dataFormatada = (new Date(viagem.data_viagem + "  00:00")).toLocaleDateString()
-					viagem.valorFormatado = viagem.valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})
-					viagem.valorFormatado = viagem.valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})
-					viagem.despesa  = viagem.despesa?? ""
+      function preencherPlacas(lista) {
+        const sel = document.getElementById("f-placa");
+        const keep = sel.value;
+        const placas = [
+          ...new Set(lista.map((v) => v.placa).filter(Boolean)),
+        ].sort();
+        sel.innerHTML =
+          '<option value="">Todas</option>' +
+          placas.map((p) => `<option value="${p}">${p}</option>`).join("");
+        if (placas.includes(keep)) sel.value = keep;
+      }
+      function dentroPeriodo(d, ini, fim) {
+        if (!ini && !fim) return true;
+        const x = new Date((d || "") + "T00:00:00").getTime();
+        if (ini) {
+          const i = new Date(ini + "T00:00:00").getTime();
+          if (x < i) return false;
+        }
+        if (fim) {
+          const f = new Date(fim + "T23:59:59").getTime();
+          if (x > f) return false;
+        }
+        return true;
+      }
+      function incluiTexto(v, needle) {
+        if (!needle) return true;
+        return String(v || "")
+          .toLowerCase()
+          .includes(String(needle).toLowerCase());
+      }
+      function entreValores(v, min, max) {
+        const n = Number(v || 0);
+        if (min !== "" && !isNaN(min) && n < Number(min)) return false;
+        if (max !== "" && !isNaN(max) && n > Number(max)) return false;
+        return true;
+      }
 
-					itens += `<tr>
-							<td data-title="ID">${viagem.id}</td>
-							<td data-title="Data">${viagem.dataFormatada}</td>
-							<td data-title="Veículo">${viagem.placa}</td>
-							<td data-title="Origem">${viagem.origem}</td>
-							<td data-title="Destino">${viagem.destino}</td>
-							<td data-title="Desc. Carga">${viagem.carga}</td>
-							<td data-title="Valor">${viagem.valorFormatado}</td>
-							<td class="d-print-none">
-									<button class="btn btn-primary d-md-block d-none" onclick="openPopup(${viagem.id})">Mais</button>
-									<button class="btn btn-primary d-block d-md-none btn-sm" onclick="openPopup(${viagem.id})">+</button>
-							</td>
-						</tr>`
-					let respostaApidespesa = await callApi(`/viagem/${viagem.id}/despesas`)
-					let despesas = await respostaApidespesa.json();
-					let desp = []
+      function aplicarFiltros() {
+        const di = document.getElementById("f-data-inicio").value || null;
+        const df = document.getElementById("f-data-fim").value || null;
+        const placa = document.getElementById("f-placa").value.trim();
+        const origem = document.getElementById("f-origem").value.trim();
+        const destino = document.getElementById("f-destino").value.trim();
+        const nf = document.getElementById("f-nf").value.trim();
+        const vmin = document.getElementById("f-valor-min").value;
+        const vmax = document.getElementById("f-valor-max").value;
+        const busca = document.getElementById("f-busca").value.trim();
 
-					for (let despesa of despesas) {
-						despesa.valorFormatado = despesa.valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})
-						
-						desp.push(`${despesa.descricao} ${despesa.valorFormatado}`)
-					}
-					itens += `<tr><td data-title="despesas" colspan="8"><b>Despesas:</b> ${desp.join(" | ")}</td></tr>`
-				}
+        viagensFiltradas = viagens.filter((v) => {
+          if (!dentroPeriodo(v.data_viagem, di, df)) return false;
+          if (placa && v.placa !== placa) return false;
+          if (!incluiTexto(v.origem, origem)) return false;
+          if (!incluiTexto(v.destino, destino)) return false;
+          if (!incluiTexto(v.nf, nf)) return false;
+          if (!entreValores(v.valor, vmin, vmax)) return false;
+          if (busca) {
+            const blob = [
+              v.id,
+              v.data_viagem,
+              v.placa,
+              v.origem,
+              v.destino,
+              v.carga,
+              v.valor,
+              v.nf,
+              v.cpf_motorista,
+              v.solicitante,
+            ]
+              .join(" ")
+              .toLowerCase();
+            if (!blob.includes(busca.toLowerCase())) return false;
+          }
+          return true;
+        });
+        renderCards(viagensFiltradas);
+        countActiveFilters();
+      }
 
-				table.tBodies[0].innerHTML = itens
+      function resetFiltros() {
+        document.getElementById("form-filtros").reset();
+        document.getElementById("f-placa").value = "";
+        aplicarFiltros();
+        countActiveFilters();
+      }
 
-			} catch (e) {
-				exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar as viagens realizadas")
-			} finally {
-				loadingStop()
-			}
-		}
+      function newCardHtml() {
+        const href = `${window.APP_PATH || ""}/viagem`;
+        return `
+          <div class="card-viagem card-new border-primary-subtle"
+               role="button" tabindex="0"
+               aria-label="Cadastrar nova viagem"
+               onclick="window.__AUTH__.goTo('/viagem')"
+               onkeydown="if(event.key==='Enter'||event.key===' '){ event.preventDefault(); window.__AUTH__.goTo('/viagem'); }">
+            <i class="bi bi-plus-circle"></i>
+            <span class="label">Nova viagem</span>
+          </div>`;
+      }
 
-		atualizaViagens()
-	</script>
+      function renderCards(lista) {
+        const wrap = document.getElementById("lista-viagens");
+        let html = newCardHtml(); // SEMPRE primeiro
+        if (!lista || !lista.length) {
+          html += `<div class="text-center text-body-secondary py-4">Nenhuma viagem encontrada</div>`;
+          wrap.innerHTML = html;
+          return;
+        }
+        for (const v of lista) {
+          const dataFmt = new Date(
+            (v.data_viagem || "").trim() + "T00:00:00"
+          ).toLocaleDateString("pt-BR");
+          const valorFmt = Number(v.valor || 0).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          });
+          html += `<div class="card card-viagem p-3">
+            <div class="header">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="chip chip-accent"><i class="bi bi-calendar2-date"></i> ${dataFmt}</span>
+                <span class="chip chip-muted">#${v.id}</span>
+                <span class="chip chip-muted">${
+                  v.nf ? "NF " + v.nf : "Sem NF"
+                }</span>
+              </div>
+              <div class="fw-semibold"><i class="bi bi-truck"></i> ${
+                v.placa || "-"
+              }</div>
+            </div>
+            <div class="mb-2">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="fw-semibold"><i class="bi bi-geo-alt"></i> ${
+                  v.origem || "-"
+                }</span>
+                <span class="text-body-secondary">→</span>
+                <span class="fw-semibold"><i class="bi bi-flag"></i> ${
+                  v.destino || "-"
+                }</span>
+              </div>
+              <div class="text-body-secondary small mt-1">${
+                v.carga || "Sem descrição da carga"
+              }</div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="chip chip-money"><i class="bi bi-cash-coin"></i> ${valorFmt}</div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary btn-sm" onclick="window.__AUTH__.goTo('/viagem/?id=${
+                  v.id
+                }')">Editar</button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="openPopup(${
+                  v.id
+                })">Detalhes</button>
+              </div>
+            </div>
+          </div>`;
+        }
+        wrap.innerHTML = html;
+      }
 
-</main>
+      async function openPopup(id) {
+        const modalEl = document.getElementById("modalDetalhe");
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl, {
+          backdrop: true,
+          keyboard: true,
+        });
+        document.getElementById("detalheLoading").classList.remove("d-none");
+        document.getElementById("conteudoDetalhe").classList.add("d-none");
+        document.getElementById("badgeId").textContent = `#${id}`;
+        document
+          .getElementById("btnEditar")
+          .setAttribute("href", `${window.APP_PATH}/viagem/?id=${id}`);
+        modal.show();
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-        crossorigin="anonymous"></script>
-</body>
+        try {
+          const v = (viagens || []).find((x) => x.id == id);
+          if (!v) throw new Error("Viagem não encontrada");
+          const dataFmt = new Date(
+            (v.data_viagem || "").trim() + "T00:00:00"
+          ).toLocaleDateString("pt-BR");
+          const valorFmt = Number(v.valor || 0).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          });
+          document.getElementById("modalTitulo").textContent = `Viagem ${
+            v.placa || ""
+          }`.trim();
+          document.querySelector("#chipData span:last-child").textContent =
+            dataFmt || "-";
+          document.querySelector("#chipValor span:last-child").textContent =
+            valorFmt;
+          document.querySelector("#chipNF span:last-child").textContent =
+            v.nf || "-";
+          document.getElementById("kvSolicitante").textContent =
+            v.solicitante || "-";
+          document.getElementById("kvMotorista").textContent =
+            v.cpf_motorista || "-";
+          document.getElementById("kvPlaca").textContent = v.placa || "-";
+          document.getElementById("kvCarga").textContent = v.carga || "-";
+          document.getElementById("kvOrigem").textContent = v.origem || "-";
+          document.getElementById("kvDestino").textContent = v.destino || "-";
+
+          const ul = document.getElementById("listaDespesas");
+          ul.innerHTML = "";
+          document.getElementById("semDespesas").classList.add("d-none");
+
+          const r = await window.__AUTH__.callApi(`/viagem/${id}/despesas`);
+          let despesas = [];
+          if (r.ok) despesas = await r.json();
+          if (!despesas || despesas.length === 0) {
+            document.getElementById("semDespesas").classList.remove("d-none");
+          } else {
+            for (const d of despesas) {
+              const vFmt = Number(d.valor || 0).toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              });
+              const li = document.createElement("li");
+              li.className =
+                "list-group-item d-flex justify-content-between align-items-center";
+              li.innerHTML = `<span>${d.descricao}</span><span class="badge text-bg-light">${vFmt}</span>`;
+              ul.appendChild(li);
+            }
+          }
+        } catch (e) {
+          exibirMensagemDeAviso(
+            document.querySelector("#mensagem-erro"),
+            "Falha ao carregar detalhes."
+          );
+        } finally {
+          document.getElementById("detalheLoading").classList.add("d-none");
+          document.getElementById("conteudoDetalhe").classList.remove("d-none");
+        }
+      }
+
+      async function carregarViagens() {
+        try {
+          loadingStart();
+          const r = await window.__AUTH__.callApi("/viagem");
+          if (r.status == 401) {
+            alert("login expirado");
+            window.__AUTH__.goTo("/login");
+            return;
+          }
+          if (!r.ok) {
+            exibirMensagemDeAviso(
+              document.querySelector("#mensagem-erro"),
+              "Não foi possível localizar as viagens realizadas"
+            );
+            return;
+          }
+          const data = await r.json();
+          viagens = [...data].sort((a, b) =>
+            String(b.data_viagem).localeCompare(String(a.data_viagem))
+          );
+          preencherPlacas(viagens);
+          aplicarFiltros();
+        } catch (e) {
+          exibirMensagemDeAviso(
+            document.querySelector("#mensagem-erro"),
+            "Não foi possível localizar as viagens realizadas"
+          );
+        } finally {
+          loadingStop();
+        }
+      }
+
+      function debounce(fn, delay) {
+        let t;
+        return function () {
+          clearTimeout(t);
+          t = setTimeout(() => fn.apply(this, arguments), delay);
+        };
+      }
+      function countActiveFilters() {
+        let active = 0;
+        const get = (id) => document.getElementById(id)?.value?.trim();
+        [
+          "f-data-inicio",
+          "f-data-fim",
+          "f-placa",
+          "f-origem",
+          "f-destino",
+          "f-nf",
+        ].forEach((id) => {
+          if (get(id)) active++;
+        });
+        const vmin = get("f-valor-min"),
+          vmax = get("f-valor-max");
+        if (vmin !== "" && !isNaN(Number(vmin))) active++;
+        if (vmax !== "" && !isNaN(Number(vmax))) active++;
+        document.getElementById("badgeActiveFilters").textContent =
+          String(active);
+        const adv = document.getElementById("advFilters");
+        if (!adv) return;
+        const isShown = adv.classList.contains("show");
+        if (active > 0 && !isShown)
+          new bootstrap.Collapse(adv, { toggle: true });
+      }
+      function wireFilterCounting() {
+        const ids = [
+          "f-data-inicio",
+          "f-data-fim",
+          "f-placa",
+          "f-origem",
+          "f-destino",
+          "f-nf",
+          "f-valor-min",
+          "f-valor-max",
+        ];
+        const deb = debounce(countActiveFilters, 150);
+        ids.forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.addEventListener("input", deb);
+          el.addEventListener("change", deb);
+        });
+        countActiveFilters();
+      }
+
+      document
+        .getElementById("form-filtros")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          aplicarFiltros();
+        });
+      document
+        .getElementById("btn-limpar")
+        .addEventListener("click", resetFiltros);
+      (function wireQuickSearch() {
+        const el = document.getElementById("f-busca");
+        if (!el) return;
+        const deb = debounce(() => aplicarFiltros(), 250);
+        el.addEventListener("input", deb);
+        el.addEventListener("change", deb);
+      })();
+
+      (async function onLoad() {
+        wireFilterCounting();
+        await carregarViagens();
+      })();
+    </script>
+
+    <script src="../public/header.js" defer></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      crossorigin="anonymous"
+    ></script>
+  </body>
 </html>

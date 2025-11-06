@@ -1,421 +1,575 @@
 <!DOCTYPE html>
 <html lang="pt">
+  <head>
+    <meta charset="utf-8" />
+    <title>Veículo • Gestão de viagens</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="">
-	<title>cadastro de veiculos</title>
+    <script>
+      window.APP_PATH = "/frete-avulso-front";
+      window.API_URL =
+        location.hostname === "localhost" || location.hostname === "127.0.0.1"
+          ? "http://127.0.0.1:5000"
+          : "https://frete-avulso-back.onrender.com";
+    </script>
+    <script src="../auth.js"></script>
+    <script>
+      (async () => {
+        await window.__AUTH__.requireAuth();
+      })();
+    </script>
 
-	<script lang="javascript">
-		var appPath = "/frete-avulso-front";
-		var apiUrl = "https://frete-avulso-back.onrender.com"
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../dark.css" />
+    <link rel="stylesheet" href="../public/header.css" />
 
-		function goTo(path) {
-			location.href = location.origin + appPath + path;
-		}
+    <style>
+      :root {
+        --card-radius: 16px;
+        --shadow-1: 0 8px 24px rgba(0, 0, 0, 0.08);
+        --shadow-2: 0 16px 40px rgba(0, 0, 0, 0.14);
+      }
+      [data-bs-theme="dark"] {
+        --shadow-1: 0 8px 24px rgba(0, 0, 0, 0.45);
+        --shadow-2: 0 16px 40px rgba(0, 0, 0, 0.6);
+      }
+      main {
+        margin-top: var(--app-header-h, 64px);
+      }
 
-		async function callApi(path, options) {
-			let token = sessionStorage.getItem("token")
-			options = {
-				...options,
-				headers: {
-					'content-type': "application/json",
-					Authorization: `Bearer ${token}`
-				}
-			}
-			return fetch(apiUrl + path, options)
-		}
+      .page-wrap {
+        padding-block: clamp(16px, 2.5vw, 28px);
+        max-width: 1024px;
+      }
+      .page-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .page-title {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .hint {
+        color: var(--bs-secondary-color);
+      }
 
-		var token = sessionStorage.getItem("token")
-		if (!token || token.length == 0) {
-			goTo("/login")
-		}
-	</script>
+      .sheet {
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: var(--card-radius);
+        box-shadow: var(--shadow-1);
+      }
+      .sheet:hover {
+        box-shadow: var(--shadow-2);
+      }
+      .sheet-header {
+        padding: 1rem 1.25rem 0.75rem;
+        border-bottom: 1px dashed var(--bs-border-color);
+      }
+      .sheet-body {
+        padding: 1rem 1.25rem 1.25rem;
+      }
 
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-	      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+      .form-grid {
+        display: grid;
+        gap: 0.9rem;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 768px) {
+        .form-grid {
+          grid-template-columns: repeat(12, 1fr);
+          align-items: end;
+        }
+        .col-span-2 {
+          grid-column: span 2;
+        }
+        .col-span-3 {
+          grid-column: span 3;
+        }
+        .col-span-4 {
+          grid-column: span 4;
+        }
+        .col-span-12 {
+          grid-column: span 12;
+        }
+      }
 
-	<link rel="stylesheet" href="../dark.css">
+      .form-control:focus,
+      .form-select:focus {
+        border-color: rgba(var(--bs-primary-rgb), 0.45);
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+      }
 
-	<style>
-		.overlay {
-			position: fixed;
-			width: 100%;
-			height: 100%;
-			top: 0;
-			left: 0;
-			background: #cccccc80;
-		}
+      .data-card {
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: var(--card-radius);
+        box-shadow: var(--shadow-1);
+      }
+      .table > thead th {
+        border-bottom: 1px solid var(--bs-border-color);
+      }
+      .table-striped > tbody > tr:nth-of-type(odd) > * {
+        background-color: var(--bs-tertiary-bg) !important;
+      }
+      .table-hover tbody tr:hover > * {
+        background-color: rgba(var(--bs-primary-rgb), 0.08) !important;
+      }
 
-		.table-w-auto-ajust {
-			min-width: 100%;
-		}
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-top: 1px solid var(--bs-border-color);
+        border-bottom-left-radius: var(--card-radius);
+        border-bottom-right-radius: var(--card-radius);
+        background: var(--bs-body-bg);
+      }
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--bs-border-color);
+      }
+      .btn-ghost:hover {
+        border-color: rgba(var(--bs-primary-rgb), 0.45);
+        background: var(--bs-tertiary-bg);
+      }
 
-		@media (min-width: 576px) {
-			.table-w-auto-ajust {
-				min-width: 200px;
-			}
-		}
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: #00000033;
+        z-index: 1055;
+      }
+      :focus {
+        outline: 2px solid
+          color-mix(in srgb, var(--bs-primary), transparent 55%);
+        outline-offset: 2px;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+    </style>
+  </head>
 
-		@media (min-width: 768px) {
-			.table-w-auto-ajust {
-				min-width: 400px;
-			}
-		}
+  <body>
+    <a class="visually-hidden-focusable" href="#main">Pular para o conteúdo</a>
 
-		@media (min-width: 992px) {
-			.table-w-auto-ajust {
-				min-width: 600px;
-			}
-		}
+    <main
+      id="main"
+      class="container page-wrap"
+      role="main"
+      tabindex="-1"
+      aria-labelledby="page-title"
+    >
+      <div id="mensagem-erro" class="mb-3" aria-live="assertive"></div>
 
-		@media (min-width: 1200px) {
-			.table-w-auto-ajust {
-				min-width: 800px;
-			}
-		}
+      <div class="page-head">
+        <div class="page-title h4 m-0">
+          <i class="bi bi-truck"></i>
+          <span id="page-title">Cadastro de veículos</span>
+        </div>
+        <div class="d-flex gap-2">
+          <a class="btn btn-ghost" href="../viagens"
+            ><i class="bi bi-arrow-left-short"></i> Viagens</a
+          >
+        </div>
+      </div>
+      <div class="hint mb-3">
+        Preencha os campos e salve. Edite itens na lista abaixo.
+      </div>
 
-	</style>
-	<script lang="javascript">
+      <section class="sheet mb-4" aria-labelledby="form-title">
+        <div class="sheet-header">
+          <h2 class="h6 m-0" id="form-title">Dados do veículo</h2>
+        </div>
+        <div class="sheet-body">
+          <form novalidate>
+            <input type="hidden" name="method" id="method" value="post" />
+            <div class="form-grid">
+              <div class="col-span-2">
+                <label for="placa" class="form-label">Placa</label>
+                <input
+                  name="placa"
+                  id="placa"
+                  type="text"
+                  class="form-control text-uppercase"
+                  placeholder="ABC-1234"
+                  autocomplete="off"
+                  inputmode="text"
+                  pattern="^[A-Z]{3}-\d{4}$"
+                  maxlength="8"
+                  aria-describedby="placa-help placa-err"
+                />
+                <div id="placa-help" class="form-text">
+                  Use o padrão ABC-1234.
+                </div>
+                <span id="placa-err" class="sr-only" aria-live="polite"></span>
+              </div>
 
-		function exibirMensagemDeErro(ancora, menssagem) {
-			exibirAlerta(ancora, 'danger', menssagem)
-		}
+              <div class="col-span-4">
+                <label for="descricao" class="form-label">Descrição</label>
+                <input
+                  name="descricao"
+                  id="descricao"
+                  type="text"
+                  class="form-control"
+                  placeholder="Caminhão caçamba preto"
+                  autocomplete="off"
+                  aria-describedby="desc-err"
+                />
+                <span id="desc-err" class="sr-only" aria-live="polite"></span>
+              </div>
 
-		function exibirMensagemDeAviso(ancora, menssagem) {
-			exibirAlerta(ancora, 'warning', menssagem)
-		}
+              <div class="col-span-4">
+                <label for="cpf_motorista" class="form-label">Motorista</label>
+                <select
+                  class="form-select"
+                  name="cpf_motorista"
+                  id="cpf_motorista"
+                  aria-label="Selecionar motorista"
+                ></select>
+              </div>
 
-		function exibirMensagemDeSucesso(ancora, menssagem) {
-			exibirAlerta(ancora, 'success', menssagem)
-		}
+              <div class="col-span-12 d-flex gap-2 justify-content-end">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  onclick="resetarFormulario()"
+                  aria-label="Limpar formulário"
+                >
+                  Limpar
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  aria-label="Salvar veículo"
+                >
+                  Salvar
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
 
-		function exibirAlerta(ancora, tipo, menssagem) {
-			const wrapper = document.createElement('div')
-			wrapper.innerHTML = [
-				`<div class="alert alert-${tipo} alert-dismissible alert-dismissible fade show d-flex align-items-center" role="alert">`,
-				`   <div>${menssagem}</div>`,
-				'   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
-				'</div>'
-			].join('')
-			ancora.append(wrapper)
-		}
+      <section class="data-card">
+        <div class="sheet-header">
+          <h2 class="h6 m-0">Veículos cadastrados</h2>
+        </div>
+        <div class="sheet-body">
+          <div class="table-responsive">
+            <table
+              id="table-veiculos"
+              class="table table-striped table-hover align-middle mb-0"
+            >
+              <caption class="text-start">
+                Lista de veículos
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Placa</th>
+                  <th scope="col">Descrição</th>
+                  <th scope="col">Motorista</th>
+                  <th scope="col" class="text-end" style="width: 120px">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
 
-		function loadingStart() {
-			let overlay = document.querySelector(`div.overlay`);
-			overlay.classList.remove("d-none");
-			overlay.classList.add("d-flex");
-		}
+    <div
+      class="overlay d-flex align-items-center justify-content-center d-none"
+      aria-hidden="true"
+    >
+      <div class="loading d-flex justify-content-center">
+        <div
+          class="spinner-border text-primary spinner-border-sm"
+          role="status"
+          aria-label="Carregando"
+          style="width: 3rem; height: 3rem"
+        ></div>
+      </div>
+    </div>
 
-		function loadingStop() {
-			let overlay = document.querySelector(`div.overlay`);
-			overlay.classList.add("d-none");
-			overlay.classList.remove("d-flex");
-		}
-	</script>
-</head>
+    <script>
+      (function initTheme() {
+        const isDark = sessionStorage.getItem("darktheme") === "true";
+        document.body.setAttribute("data-bs-theme", isDark ? "dark" : "light");
+      })();
 
+      const slotAvisos = document.querySelector("#mensagem-erro");
 
-<body>
-<nav class="navbar navbar-expand-lg bg-body-secondary">
-	<button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-	        aria-controls="offcanvasNavbar">
-		<span class="navbar-toggler-icon"></span>
-	</button>
-	<div class="d-flex flex-grow-1 flex-md-grow-0 justify-content-center justify-content-md-start">
-		<h1 class="navbar-brand h-3"></h1>
-	</div>
-	<div class="offcanvas offcanvas-start flex-grow-0" tabindex="-1" id="offcanvasNavbar"
-	     aria-labelledby="offcanvasNavbarLabel">
-		<div class="offcanvas-header">
-			<h5 class="offcanvas-title" id="offcanvasNavbarLabel">Menu</h5>
-			<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-		</div>
-		<div class="offcanvas-body">
-			<ul class="navbar-nav justify-content-start pe-3">
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link" href="/frete-avulso-front/viagens">Viagens</a>
-				</li>
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link " href="/frete-avulso-front/viagem">+ Viagem</a>
-				</li>
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link" href="/frete-avulso-front/motorista">+ Motorista</a>
-				</li>
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link disabled" href="/frete-avulso-front/veiculos">+ Veículo</a>
-				</li>
+      function exibirAlerta(ancora, tipo, mensagem) {
+        const w = document.createElement("div");
+        w.innerHTML = [
+          `<div class="alert alert-${tipo} alert-dismissible fade show d-flex align-items-center" role="alert" aria-live="assertive" aria-atomic="true" tabindex="-1">`,
+          `  <div>${mensagem}</div>`,
+          `  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>`,
+          `</div>`,
+        ].join("");
+        const el = w.firstChild;
+        ancora.innerHTML = "";
+        ancora.append(el);
+        el.focus();
+      }
+      const exibirMensagemDeErro = (a, m) => exibirAlerta(a, "danger", m);
+      const exibirMensagemDeAviso = (a, m) => exibirAlerta(a, "warning", m);
+      const exibirMensagemDeSucesso = (a, m) => exibirAlerta(a, "success", m);
 
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/viagens">Viagens</a>
-				</li>
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/viagem">+ Viagem</a>
-				</li>
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/motorista">+ Motorista</a>
-				</li>
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1 disabled " href="/frete-avulso-front/veiculos">+ Veículo</a>
-				</li>
-			</ul>
-		</div>
-	</div>
-	<div class="d-flex align-self-auto mx-auto">
-	</div>
-	<div class="d-flex justify-content-md-end me-3">
-		<div class="form-check form-switch">
-			<input class="form-check-input" type="checkbox" role="switch" id="switch-theme" onclick="toggleThemeInput(this)">
-			<label class="form-check-label" for="switch-theme">Modo escuro</label>
-		</div>
-	</div>
-</nav>
-<main class="container-fluid container-md">
-	<div id="mensagem-erro" class="mt-3"></div>
-	<section class="d-flex align-items-center justify-content-center mt-5">
-		<h1 class="h2">Cadastro de Veículos</h1>
-	</section>
-	<section>
-		<form>
-			<div class="row justify-content-md-center align-items-end">
-				<input type="hidden" name="method" id="method" value="post">
-				<div class="col-12 col-md-2 mt-3">
-					<label for="placa" class="form-label">Placa</label>
-					<input name="placa" id="placa" type="text" class="form-control text-uppercase" placeholder="BBB-0000"
-					       aria-label="placa">
-				</div>
-				<div class="col-12 col-md-3 mt-3">
-					<label for="descricao" class="form-label">Descrição</label>
-					<input name="descricao" id="descricao" type="text" class="form-control" placeholder="Caminhão caçamba preto"
-					       aria-label="descricao">
-				</div>
-				<div class="col-12 col-md-3 mt-3">
-					<label for="cpf_motorista" class="form-label">Motorista</label>
-					<select class="form-select" name="cpf_motorista" id="cpf_motorista" type="text" aria-label="cpf_motorista" >
-					</select>
-				</div>
-				<div class="col-12 col-md-1 mt-5 mt-md-2 d-grid d-md-flex">
-					<button type="submit" class="btn btn-primary">Salvar</button>
-				</div>
-				<div class="col-12 col-md-1 mt-5 mt-md-2 d-grid d-md-flex">
-					<button type="button" class="btn btn-warning" onclick="resetarFormulario()">Limpar</button>
-				</div>
-			</div>
-		</form>
-	</section>
+      function loadingStart() {
+        const o = document.querySelector("div.overlay");
+        o.classList.remove("d-none");
+        o.classList.add("d-flex");
+        o.setAttribute("aria-busy", "true");
+        o.removeAttribute("aria-hidden");
+      }
+      function loadingStop() {
+        const o = document.querySelector("div.overlay");
+        o.classList.add("d-none");
+        o.classList.remove("d-flex");
+        o.removeAttribute("aria-busy");
+        o.setAttribute("aria-hidden", "true");
+      }
 
-	<section class="d-flex align-items-center justify-content-center mt-5">
-		<h1 class="h2">Veículos cadastrados</h1>
-	</section>
+      function setFieldError(id, errId, msg) {
+        const input = document.getElementById(id),
+          err = document.getElementById(errId);
+        if (msg) {
+          input.setAttribute("aria-invalid", "true");
+          err.textContent = msg;
+        } else {
+          input.removeAttribute("aria-invalid");
+          err.textContent = "";
+        }
+      }
 
-	<section class="d-flex align-items-center justify-content-center">
-		<div class="table-responsive table-w-auto-ajust">
-			<table id="table-veiculos" class="table table-responsive table-striped table-hover">
-				<thead>
-				<tr>
-					<th scope="col">Placa</th>
-					<th scope="col">Desc</th>
-					<th scope="col">Motorista</th>
-					<th scope="col"></th>
-				</tr>
-				</thead>
-				<tbody>
-				</tbody>
-			</table>
-		</div>
-	</section>
-</main>
-<div class="overlay d-flex align-items-center justify-content-center d-none">
-	<div class="loading d-flex justify-content-center">
-		<div class="spinner-border text-primary spinner-border-sm" role="status"
-		     style="width: 3rem; height: 3rem;">
-		</div>
-	</div>
-</div>
-<script lang="javascript">
+      async function atualizaListaVeiculos() {
+        try {
+          loadingStart();
+          const response = await window.__AUTH__.callApi("/veiculo");
+          if (response.status == 401) {
+            alert("login expirado");
+            window.__AUTH__.goTo("/login");
+            return;
+          }
+          if (!response.ok) {
+            exibirMensagemDeAviso(
+              slotAvisos,
+              "Não foi possível localizar os veículos cadastrados"
+            );
+            return;
+          }
 
-	function toggleThemeInput(e){
-		sessionStorage.setItem("darktheme", e.checked)
-		if(e.checked){
-			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "dark")
-		}
-		else {
-			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "light")
-		}
-	}
-	(function init(){
-		let isDark = sessionStorage.getItem("darktheme") === 'true'
+          window.veiculos = await response.json();
+          const tbody = document.querySelector("#table-veiculos tbody");
+          let itens = "";
+          for (const veiculo of veiculos) {
+            veiculo.cpf_motorista = veiculo.cpf_motorista ?? "";
+            const m = (window.motoristas || []).find(
+              (x) => x.cpf == veiculo.cpf_motorista
+            );
+            const nome = m ? m.nome : "-";
+            itens += `<tr>
+              <td>${veiculo.placa}</td>
+              <td>${veiculo.descricao}</td>
+              <td>${nome}</td>
+              <td class="text-end">
+                <button type="button" class="btn btn-sm btn-outline-primary" onClick="editarVeiculo('${veiculo.placa}')" aria-label="Editar veículo ${veiculo.placa}">
+                  <i class="bi bi-pencil-square"></i> Editar
+                </button>
+              </td>
+            </tr>`;
+          }
+          tbody.innerHTML =
+            itens ||
+            `<tr><td colspan="4" class="text-center text-secondary py-3">Sem veículos</td></tr>`;
+        } catch {
+          exibirMensagemDeAviso(
+            slotAvisos,
+            "Não foi possível localizar os veículos cadastrados"
+          );
+        } finally {
+          loadingStop();
+        }
+      }
 
-		document.getElementById("switch-theme").checked = isDark;
-		if(isDark){
-			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "dark")
-		}
-		else {
-			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "light")
-		}
-	})()
+      async function buscarMotoristas() {
+        try {
+          const response = await window.__AUTH__.callApi("/motorista");
+          if (response.status == 401) {
+            alert("login expirado");
+            window.__AUTH__.goTo("/login");
+            return;
+          }
+          if (!response.ok) {
+            exibirMensagemDeAviso(
+              slotAvisos,
+              "Não foi possível localizar os motoristas cadastrados"
+            );
+            return;
+          }
 
-	var slotAvisos = document.querySelector("#mensagem-erro")
+          window.motoristas = await response.json();
+          const select = document.getElementById("cpf_motorista");
+          select.innerHTML = "";
+          const opt = document.createElement("option");
+          opt.text = "-";
+          opt.value = "";
+          select.appendChild(opt);
+          for (const motorista of motoristas) {
+            const o = document.createElement("option");
+            o.text = motorista.nome;
+            o.value = motorista.cpf;
+            select.appendChild(o);
+          }
+        } catch {
+          exibirMensagemDeAviso(
+            slotAvisos,
+            "Não foi possível localizar os motoristas cadastrados"
+          );
+        }
+      }
 
-	async function atualizaListaVeiculos() {
-		try {
-			loadingStart()
-			let response = await callApi("/veiculo")
-			if (response.status == 401) {
-				alert("login expirado")
-				goTo("/login")
-				return
-			}
-			if (!response.ok) {
-				exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os veículos cadastrados")
-				return
-			}
-			window.veiculos = await response.json();
+      function resetarFormulario() {
+        document.getElementById("method").value = "post";
+        document.getElementById("descricao").value = "";
+        document.getElementById("cpf_motorista").value = "";
+        document.getElementById("placa").value = "";
+        document.getElementById("placa").removeAttribute("disabled");
+        setFieldError("placa", "placa-err", "");
+        setFieldError("descricao", "desc-err", "");
+      }
 
-			let table = document.getElementById("table-veiculos")
-			let itens = ""
-			for (let veiculo of veiculos) {
-				veiculo.cpf_motorista = veiculo.cpf_motorista ?? ""
-				veiculo.nome_motorista = motoristas.find(m => m.cpf == veiculo.cpf_motorista).nome;
-				itens += `<tr>
-						  <td data-title="Placa">${veiculo.placa}</th>
-							<td data-title="Descrição">${veiculo.descricao}</td>
-							<td data-title="Motorista">${veiculo.nome_motorista}</td>
-						  <td>
-							  <button type="button" class="btn btn-sm btn-primary" onClick="editarVeiculo('${veiculo.placa}')">
-								  <span class="d-md-block d-none">Editar</span>
-								  <i class='d-block d-md-none fas fa-pencil-alt icon'></i>
-							  </button>
-							  <!--<button type="button" class="btn btn-sm btn-danger" onClick="excluirVeiculo(${veiculo.placa})">
-								  <span class="d-md-block d-none">Editar</span>
-								  <i class="d-block d-md-none fas fa-trash-alt icon"></i>
-							  </button> -->
-						  </td>
-						</tr>`
-			}
+      function editarVeiculo(placa) {
+        const v = (window.veiculos || []).find((x) => x.placa == placa);
+        document.getElementById("method").value = "put";
+        document.getElementById("descricao").value = v.descricao;
+        document.getElementById("cpf_motorista").value = v.cpf_motorista || "";
+        document.getElementById("placa").value = placa;
+        document.getElementById("placa").setAttribute("disabled", "");
+      }
 
-			table.tBodies[0].innerHTML = itens
+      function validateClient() {
+        const placa = document
+          .getElementById("placa")
+          .value.trim()
+          .toUpperCase();
+        const descricao = document.getElementById("descricao").value.trim();
+        let first = null;
 
-		} catch (e) {
-			exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os veículos cadastrados")
-		} finally {
-			loadingStop()
-		}
-	}
+        if (!/^[A-Z]{3}-\d{4}$/.test(placa)) {
+          setFieldError("placa", "placa-err", "Placa no formato ABC-1234.");
+          first = first || "placa";
+        } else setFieldError("placa", "placa-err", "");
 
-	async function buscarMotoristas() {
-			try {
-				let response = await callApi("/motorista")
-				if (response.status == 401) {
-					alert("login expirado")
-					goTo("/login")
-					return
-				}
-				if (!response.ok) {
-					exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os motoristas cadastrados")
-					return
-				}
-				window.motoristas = await response.json();
-				let selectMotoristas = document.getElementById("cpf_motorista");
+        if (descricao.length < 2) {
+          setFieldError("descricao", "desc-err", "Informe a descrição.");
+          first = first || "descricao";
+        } else setFieldError("descricao", "desc-err", "");
 
-				let option = document.createElement("option");
-				option.text = "-";
-				option.value = "";
-				selectMotoristas.appendChild(option)
+        if (first) {
+          document.getElementById(first).focus();
+          return false;
+        }
+        return true;
+      }
 
-				for (let motorista of motoristas) {
-					let option = document.createElement("option");
-					option.text = motorista.nome;
-					option.value = motorista.cpf;
-					selectMotoristas.appendChild(option);
-				}
+      document.querySelector("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!validateClient()) return;
 
-			} catch (e) {
-				exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os motoristas cadastrados")
-			}
+        loadingStart();
+        const method = document.getElementById("method").value;
+        const descricao = document.getElementById("descricao").value.trim();
+        const placa = document.getElementById("placa").value.toUpperCase();
+        const cpf_motorista = document
+          .getElementById("cpf_motorista")
+          .value.toUpperCase();
+        const path = method === "put" ? `/veiculo/${placa}` : "/veiculo";
 
-		}
+        try {
+          const r = await window.__AUTH__.callApi(path, {
+            method,
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ placa, descricao, cpf_motorista }),
+          });
+          if (r.status == 401) {
+            alert("login expirado");
+            window.__AUTH__.goTo("/login");
+            return;
+          }
+          if (r.status == 400) {
+            let { message } = await r.json().catch(() => ({}));
+            exibirMensagemDeAviso(slotAvisos, message || "Dados inválidos.");
+            return;
+          }
+          if (!r.ok) {
+            exibirMensagemDeAviso(
+              slotAvisos,
+              "Não foi possível salvar os dados desse veículo"
+            );
+            return;
+          }
 
-	function resetarFormulario() {
-		document.getElementById("method").value = "post"
-		document.getElementById("descricao").value = ""
-		document.getElementById("cpf_motorista").value = ""
-		document.getElementById("placa").value = ""
-		document.getElementById("placa").removeAttribute("disabled")
-	}
+          exibirMensagemDeSucesso(slotAvisos, "Veículo salvo");
+          resetarFormulario();
+          await atualizaListaVeiculos();
+        } catch {
+          exibirMensagemDeErro(
+            slotAvisos,
+            "Erro ao salvar os dados. Tente novamente."
+          );
+        } finally {
+          loadingStop();
+        }
+      });
 
-	function editarVeiculo(placa) {
-		let veiculo = veiculos.find(v => v.placa == placa)
-		document.getElementById("method").value = "put"
-		document.getElementById("descricao").value = veiculo.descricao
-		document.getElementById("cpf_motorista").value = veiculo.cpf_motorista
-		document.getElementById("placa").value = placa
-		document.getElementById("placa").setAttribute("disabled", "")
-	}
+      (async function onLoad() {
+        loadingStart();
+        await buscarMotoristas();
+        await atualizaListaVeiculos();
+        loadingStop();
+      })();
+    </script>
 
-	let formulario = document.querySelector("form");
+    <script src="../public/header.js" defer></script>
 
-	formulario.addEventListener("submit", async (e) => {
-		e.preventDefault()
-		loadingStart()
-		let method = document.getElementById("method").value
-		let descricao = document.getElementById("descricao").value
-		let placa = document.getElementById("placa").value.toUpperCase()
-		let cpf_motorista = document.getElementById("cpf_motorista").value.toUpperCase()
-		let path = method === "put" ? `/veiculo/${placa}` : "/veiculo"
-
-		try {
-			var respostaApi = await callApi(path, {
-				method,
-				body: JSON.stringify({placa, descricao, cpf_motorista})
-			})
-
-			if (respostaApi.status == 401) {
-				alert("login expirado")
-				goTo("/login")
-				return
-			}
-
-			if (respostaApi.status == 400) {
-				let {message} = await respostaApi.json();
-				exibirMensagemDeAviso(slotAvisos, message)
-				return
-			}
-
-			if (!respostaApi.ok) {
-				exibirMensagemDeAviso(slotAvisos, "Não foi possível salvar os dados desse veículo")
-				return
-			}
-			exibirMensagemDeSucesso(slotAvisos, "Veículo salvo")
-			resetarFormulario()
-			atualizaListaVeiculos()
-		} catch (error) {
-			alert("Desculpe, não foi possível cadastrar o motorista. Tente novamente mais tarde.")
-		}
-		finally {
-			loadingStop()
-		}
-
-	})
-	;
-
-
-	(async function onLoad() {
-		loadingStart();
-		await buscarMotoristas()
-		await atualizaListaVeiculos()
-		loadingStop()
-	})()
-</script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
-        crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
-        integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
-        crossorigin="anonymous"></script>
-
-</body>
-
+    <script
+      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+      crossorigin="anonymous"
+    ></script>
+  </body>
 </html>

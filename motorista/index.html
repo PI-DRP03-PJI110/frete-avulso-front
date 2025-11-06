@@ -1,364 +1,489 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt">
+  <head>
+    <meta charset="utf-8" />
+    <title>Motoristas • Gestão de viagens</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title> Cadastro de motoristas </title>
-
-	<script lang="javascript">
-		var appPath = "/frete-avulso-front";
-		var apiUrl = "https://frete-avulso-back.onrender.com"
-
-		function goTo(path) {
-			location.href = location.origin + appPath + path;
-		}
-
-		function callApi(path, options) {
-			let token = sessionStorage.getItem("token")
-			options = {
-				...options,
-				headers: {
-					'content-type': "application/json",
-					Authorization: `Bearer ${token}`
-				}
-			}
-			return fetch(apiUrl + path, options)
-		}
-
-		var token = sessionStorage.getItem("token")
-		if (!token || token.length == 0) {
-			goTo("/login")
-		}
-	</script>
-
-	<style>
-		.overlay {
-			position: fixed;
-			width: 100%;
-			height: 100%;
-			top: 0;
-			left: 0;
-			background: #cccccc80;
-		}
-
-		.table-w-auto-ajust {
-			min-width: 100%;
-		}
-
-		@media (min-width: 576px) {
-			.table-w-auto-ajust {
-				min-width: 200px;
-			}
-		}
-
-		@media (min-width: 768px) {
-			.table-w-auto-ajust {
-				min-width: 400px;
-			}
-		}
-
-		@media (min-width: 992px) {
-			.table-w-auto-ajust {
-				min-width: 600px;
-			}
-		}
-
-		@media (min-width: 1200px) {
-			.table-w-auto-ajust {
-				min-width: 800px;
-			}
-		}
-	</style>
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-
-	<link rel="stylesheet" href="../dark.css">
-
-    <script lang="javascript">
-
-        function exibirMensagemDeErro(ancora, menssagem) {
-            exibirAlerta(ancora, 'danger', menssagem)
-        }
-
-        function exibirMensagemDeAviso(ancora, menssagem) {
-            exibirAlerta(ancora, 'warning', menssagem)
-        }
-
-        function exibirMensagemDeSucesso(ancora, menssagem) {
-            exibirAlerta(ancora, 'success', menssagem)
-        }
-
-        function exibirAlerta(ancora, tipo, menssagem) {
-            const wrapper = document.createElement('div')
-            wrapper.innerHTML = [
-                `<div class="alert alert-${tipo} alert-dismissible alert-dismissible fade show d-flex align-items-center" role="alert">`,
-                `   <div>${menssagem}</div>`,
-                '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
-                '</div>'
-            ].join('')
-            ancora.append(wrapper)
-        }
-
-        function loadingStart() {
-            let overlay = document.querySelector(`div.overlay`);
-            overlay.classList.remove("d-none");
-            overlay.classList.add("d-flex");
-        }
-
-        function loadingStop() {
-            let overlay = document.querySelector(`div.overlay`);
-            overlay.classList.add("d-none");
-            overlay.classList.remove("d-flex");
-        }
+    <script>
+      window.APP_PATH = "/frete-avulso-front";
+      window.API_URL =
+        location.hostname === "localhost" || location.hostname === "127.0.0.1"
+          ? "http://127.0.0.1:5000"
+          : "https://frete-avulso-back.onrender.com";
     </script>
-</head>
-<body>
-<nav class="navbar navbar-expand-lg bg-body-secondary">
-	<button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-	        aria-controls="offcanvasNavbar">
-		<span class="navbar-toggler-icon"></span>
-	</button>
-	<div class="d-flex flex-grow-1 flex-md-grow-0 justify-content-center justify-content-md-start">
-		<h1 class="navbar-brand h-3"></h1>
-	</div>
-	<div class="offcanvas offcanvas-start flex-grow-0" tabindex="-1" id="offcanvasNavbar"
-	     aria-labelledby="offcanvasNavbarLabel">
-		<div class="offcanvas-header">
-			<h5 class="offcanvas-title" id="offcanvasNavbarLabel">Menu</h5>
-			<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-		</div>
-		<div class="offcanvas-body">
-			<ul class="navbar-nav justify-content-start pe-3">
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link" href="/frete-avulso-front/viagens">Viagens</a>
-				</li>
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link " href="/frete-avulso-front/viagem">+ Viagem</a>
-				</li>
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link disabled" href="/frete-avulso-front/motorista">+ Motorista</a>
-				</li>
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link" href="/frete-avulso-front/veiculos">+ Veículo</a>
-				</li>
+    <script src="../auth.js"></script>
+    <script>
+      (async () => {
+        await window.__AUTH__.requireAuth();
+      })();
+    </script>
 
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/viagens">Viagens</a>
-				</li>
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/viagem">+ Viagem</a>
-				</li>
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1 disabled" href="/frete-avulso-front/motorista">+ Motorista</a>
-				</li>
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1 " href="/frete-avulso-front/veiculos">+ Veículo</a>
-				</li>
-			</ul>
-		</div>
-	</div>
-	<div class="d-flex align-self-auto mx-auto">
-	</div>
-	<div class="d-flex justify-content-md-end me-3">
-		<div class="form-check form-switch">
-			<input class="form-check-input" type="checkbox" role="switch" id="switch-theme" onclick="toggleThemeInput(this)">
-			<label class="form-check-label" for="switch-theme">Modo escuro</label>
-		</div>
-	</div>
-</nav>
-<main class="container-fluid container-md">
-	<div id="mensagem-erro" class="mt-3"></div>
-	<section class="d-flex align-items-center justify-content-center mt-5">
-		<h1 class="h2">Cadastro de Motoristas</h1>
-	</section>
-	<section>
-		<form>
-			<div class="row justify-content-md-center align-items-end">
-				<input type="hidden" name="method" id="method" value="post">
-				<div class="col-12 col-md-3 mt-3">
-					<label for="cpf" class="form-label">Cpf</label>
-					<input name="cpf" id="cpf" type="text" class="form-control text-uppercase" placeholder="000.000.000-00"
-					aria-label="cpf">
-				</div>
-				<div class="col-12 col-md-4 mt-3">
-					<label for="nome" class="form-label">Nome</label>
-					<input name="nome" id="nome" type="text" class="form-control" placeholder="Nome do motorista"
-					       aria-label="nome">
-				</div>
-				<div class="col-12 col-md-1 mt-5 mt-md-2 d-grid d-md-flex">
-					<button type="submit" class="btn btn-primary">Salvar</button>
-				</div>
-				<div class="col-12 col-md-1 mt-5 mt-md-2 d-grid d-md-flex">
-					<button type="button" class="btn btn-warning" onclick="resetarFormulario()">Limpar</button>
-				</div>
-			</div>
-		</form>
-	</section>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../dark.css" />
+    <link rel="stylesheet" href="../public/header.css" />
 
-	<section class="d-flex align-items-center justify-content-center mt-5">
-		<h1 class="h2">Motoristas cadastrados</h1>
-	</section>
+    <style>
+      :root {
+        --card-radius: 16px;
+        --shadow-1: 0 8px 24px rgba(0, 0, 0, 0.08);
+        --shadow-2: 0 16px 40px rgba(0, 0, 0, 0.14);
+      }
+      [data-bs-theme="dark"] {
+        --shadow-1: 0 8px 24px rgba(0, 0, 0, 0.45);
+        --shadow-2: 0 16px 40px rgba(0, 0, 0, 0.6);
+      }
 
-	<section class="d-flex align-items-center justify-content-center">
-		<div class="table-responsive table-w-auto-ajust">
-			<table id="table-motoristas" class="table table-responsive table-striped table-hover">
-				<thead>
-				<tr>
-					<th scope="col">Cpf</th>
-					<th scope="col">Nome</th>
-					<th scope="col"></th>
-				</tr>
-				</thead>
-				<tbody>
-				</tbody>
-			</table>
-		</div>
-	</section>
-</main>
-<div class="overlay d-flex align-items-center justify-content-center d-none">
-	<div class="loading d-flex justify-content-center">
-		<div class="spinner-border text-primary spinner-border-sm" role="status"
-		     style="width: 3rem; height: 3rem;">
-		</div>
-	</div>
-</div>
-<script lang="javascript">
+      main {
+        margin-top: var(--app-header-h, 64px);
+      }
 
-	function toggleThemeInput(e){
-		sessionStorage.setItem("darktheme", e.checked)
-		if(e.checked){
-			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "dark")
-		}
-		else {
-			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "light")
-		}
-	}
-	(function init(){
-		let isDark = sessionStorage.getItem("darktheme") === 'true'
+      .page-wrap {
+        padding-block: clamp(16px, 2.5vw, 28px);
+      }
 
-		document.getElementById("switch-theme").checked = isDark;
-		if(isDark){
-			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "dark")
-		}
-		else {
-			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "light")
-		}
-	})()
+      .page-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .page-title {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .tag-soft {
+        border: 1px solid var(--bs-border-color);
+        background: var(--bs-tertiary-bg);
+        color: var(--bs-emphasis-color);
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+      }
 
-	var slotAvisos = document.querySelector("#mensagem-erro")
+      /* “sheet” = card minimalista usado na tela de Viagem */
+      .sheet {
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: var(--card-radius);
+        box-shadow: var(--shadow-1);
+      }
+      .sheet-header {
+        padding: 1rem 1.25rem 0.75rem;
+        border-bottom: 1px dashed var(--bs-border-color);
+      }
+      .sheet-body {
+        padding: 1rem 1.25rem 1.25rem;
+      }
+      .sheet:hover {
+        box-shadow: var(--shadow-2);
+      }
 
-	async function atualizaListaMotoristas() {
-		try {
-			loadingStart()
-			let response = await callApi("/motorista")
-			if (response.status == 401) {
-				alert("login expirado")
-				goTo("/login")
-				return
-			}
-			if (!response.ok) {
-				exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os motoristas cadastrados")
-				return
-			}
-			window.motoristas = await response.json();
+      .form-grid {
+        display: grid;
+        gap: 0.9rem;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 768px) {
+        .form-grid {
+          grid-template-columns: 220px 1fr auto auto;
+          align-items: end;
+        }
+      }
 
-			let table = document.getElementById("table-motoristas")
-			let itens = ""
-			for (let motorista of motoristas) {
-					itens += `<tr>
-						  <td data-title="Cpf">${motorista.cpf}</td>
-						  <td data-title="Nome">${motorista.nome}</th>
-							<td>
-								  <button type="button" class="btn btn-sm btn-primary" onClick="editarMotorista('${motorista.cpf}')">
-									  <span class="d-md-block d-none">Editar</span>
-									  <i class='d-block d-md-none fas fa-pencil-alt icon'></i>
-								  </button>
-								  <!--<button type="button" class="btn btn-sm btn-danger" onClick="excluirMotorista(${motorista.cpf})">
-									  <span class="d-md-block d-none">Editar</span>
-									  <i class="d-block d-md-none fas fa-trash-alt icon"></i>
-								  </button> -->
-						  </td>
-					</tr>`
-			}
-			table.tBodies[0].innerHTML = itens
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--bs-border-color);
+      }
+      .btn-ghost:hover {
+        border-color: rgba(var(--bs-primary-rgb), 0.45);
+        background: var(--bs-tertiary-bg);
+      }
 
-		} catch (e) {
-			exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os motoristas cadastrados")
-		} finally {
-			loadingStop()
-		}
-	}
+      .form-control:focus,
+      .form-select:focus {
+        border-color: rgba(var(--bs-primary-rgb), 0.45);
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+      }
 
-	function resetarFormulario() {
-		document.getElementById("method").value = "post"
-		document.getElementById("nome").value = ""
-		document.getElementById("cpf").value = ""
-		document.getElementById("cpf").removeAttribute("disabled")
-	}
+      .data-card {
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: var(--card-radius);
+        box-shadow: var(--shadow-1);
+      }
+      .table > thead th {
+        border-bottom: 1px solid var(--bs-border-color);
+      }
+      .table-striped > tbody > tr:nth-of-type(odd) > * {
+        background-color: var(--bs-tertiary-bg) !important;
+      }
+      .table-hover tbody tr:hover > * {
+        background-color: rgba(var(--bs-primary-rgb), 0.08) !important;
+      }
 
-	function editarMotorista(cpf) {
-		let motorista = motoristas.find(m => m.cpf == cpf)
-		document.getElementById("method").value = "put"
-		document.getElementById("nome").value = motorista.nome
-		document.getElementById("cpf").value = cpf
-		document.getElementById("cpf").setAttribute("disabled", "")
-	}
+      .alert {
+        border-radius: 12px;
+      }
 
-	let formulario = document.querySelector("form");
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: #00000033;
+        z-index: 999;
+      }
+    </style>
+  </head>
 
-	formulario.addEventListener("submit", async (e) => {
-		e.preventDefault()
-		loadingStart()
-		let method = document.getElementById("method").value
-		let nome = document.getElementById("nome").value
-		let cpf = document.getElementById("cpf").value.toUpperCase()
-		let path = method === "put" ? `/motorista/${cpf}` : "/motorista"
+  <body>
+    <a class="visually-hidden-focusable" href="#main">Pular para o conteúdo</a>
 
-		try {
-			var respostaApi = await callApi(path, {
-				method,
-				body: JSON.stringify({cpf, nome})
-			})
+    <main
+      id="main"
+      class="container page-wrap"
+      role="main"
+      tabindex="-1"
+      aria-labelledby="page-title"
+    >
+      <div id="mensagem-erro" class="mb-3" aria-live="assertive"></div>
 
-			if (respostaApi.status == 401) {
-				alert("login expirado")
-				goTo("/login")
-				return
-			}
+      <div class="page-head">
+        <div class="page-title h4 m-0">
+          <i class="bi bi-person-vcard"></i>
+          <span id="page-title">Motoristas</span>
+          <span class="tag-soft">Cadastro & lista</span>
+        </div>
+        <div class="d-flex gap-2">
+          <a class="btn btn-ghost" href="../viagens">
+            <i class="bi bi-arrow-left-short"></i> Voltar
+          </a>
+        </div>
+      </div>
 
-			if (respostaApi.status == 400) {
-				let {message} = await respostaApi.json();
-				exibirMensagemDeAviso(slotAvisos, message)
-				return
-			}
+      <section class="sheet mb-4" aria-labelledby="form-title">
+        <div class="sheet-header">
+          <h2 class="h6 m-0" id="form-title">Cadastro de motorista</h2>
+        </div>
+        <div class="sheet-body">
+          <form novalidate>
+            <input type="hidden" name="method" id="method" value="post" />
+            <div class="form-grid">
+              <div>
+                <label for="cpf" class="form-label">CPF</label>
+                <input
+                  name="cpf"
+                  id="cpf"
+                  type="text"
+                  class="form-control text-uppercase"
+                  placeholder="00000000000"
+                  autocomplete="off"
+                  inputmode="numeric"
+                  pattern="^\d{11}$"
+                  maxlength="11"
+                  aria-describedby="cpf-help cpf-err"
+                />
+                <div id="cpf-help" class="form-text">
+                  11 dígitos (somente números).
+                </div>
+                <span id="cpf-err" class="sr-only" aria-live="polite"></span>
+              </div>
 
-			if (!respostaApi.ok) {
-				exibirMensagemDeAviso(slotAvisos, "Não foi possível salvar os dados desse motorista")
-				return
-			}
-			exibirMensagemDeSucesso(slotAvisos, "Veículo salvo")
-			resetarFormulario()
-			await atualizaListaMotoristas()
-		} catch (error) {
-			alert("Desculpe, não foi possível possível salvar os dados desse motorista. Tente novamente mais tarde.")
-		} finally {
-			loadingStop()
-		}
+              <div>
+                <label for="nome" class="form-label">Nome</label>
+                <input
+                  name="nome"
+                  id="nome"
+                  type="text"
+                  class="form-control"
+                  placeholder="Nome do motorista"
+                  autocomplete="name"
+                  aria-describedby="nome-err"
+                />
+                <span id="nome-err" class="sr-only" aria-live="polite"></span>
+              </div>
 
-	})
+              <div class="d-grid">
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  aria-label="Salvar motorista"
+                >
+                  <i class="bi bi-check2"></i> Salvar
+                </button>
+              </div>
+              <div class="d-grid">
+                <button
+                  type="button"
+                  class="btn btn-ghost"
+                  onclick="resetarFormulario()"
+                  aria-label="Limpar formulário"
+                >
+                  <i class="bi bi-eraser"></i> Limpar
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
 
+      <section class="data-card">
+        <div class="sheet-header">
+          <h2 class="h6 m-0">Motoristas cadastrados</h2>
+        </div>
+        <div class="sheet-body">
+          <div class="table-responsive">
+            <table
+              id="table-motoristas"
+              class="table table-striped table-hover align-middle mb-0"
+            >
+              <caption class="text-start">
+                Lista de motoristas
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">CPF</th>
+                  <th scope="col">Nome</th>
+                  <th scope="col" class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
 
-	atualizaListaMotoristas()
-</script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
-        crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
-        integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
-        crossorigin="anonymous"></script>
+    <div
+      class="overlay d-flex align-items-center justify-content-center d-none"
+      aria-hidden="true"
+    >
+      <div class="loading d-flex justify-content-center">
+        <div
+          class="spinner-border text-primary spinner-border-sm"
+          role="status"
+          aria-label="Carregando"
+          style="width: 3rem; height: 3rem"
+        ></div>
+      </div>
+    </div>
 
-</body>
+    <script>
+      (function initTheme() {
+        const isDark = sessionStorage.getItem("darktheme") === "true";
+        document.body.setAttribute("data-bs-theme", isDark ? "dark" : "light");
+      })();
 
+      const slotAvisos = document.querySelector("#mensagem-erro");
+
+      function exibirAlerta(ancora, tipo, mensagem) {
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = [
+          `<div class="alert alert-${tipo} alert-dismissible fade show d-flex align-items-center" role="alert" aria-live="assertive" aria-atomic="true" tabindex="-1">`,
+          `  <div>${mensagem}</div>`,
+          `  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>`,
+          `</div>`,
+        ].join("");
+        const el = wrapper.firstChild;
+        ancora.innerHTML = "";
+        ancora.append(el);
+        el.focus();
+      }
+      const exibirMensagemDeErro = (a, m) => exibirAlerta(a, "danger", m);
+      const exibirMensagemDeAviso = (a, m) => exibirAlerta(a, "warning", m);
+      const exibirMensagemDeSucesso = (a, m) => exibirAlerta(a, "success", m);
+
+      function loadingStart() {
+        const overlay = document.querySelector("div.overlay");
+        overlay.classList.remove("d-none");
+        overlay.classList.add("d-flex");
+        overlay.setAttribute("aria-busy", "true");
+        overlay.setAttribute("aria-live", "polite");
+        overlay.removeAttribute("aria-hidden");
+      }
+      function loadingStop() {
+        const overlay = document.querySelector("div.overlay");
+        overlay.classList.add("d-none");
+        overlay.classList.remove("d-flex");
+        overlay.removeAttribute("aria-busy");
+        overlay.removeAttribute("aria-live");
+        overlay.setAttribute("aria-hidden", "true");
+      }
+
+      function setFieldError(id, errId, msg) {
+        const input = document.getElementById(id);
+        const err = document.getElementById(errId);
+        if (msg) {
+          input.setAttribute("aria-invalid", "true");
+          err.textContent = msg;
+        } else {
+          input.removeAttribute("aria-invalid");
+          err.textContent = "";
+        }
+      }
+
+      function validateClient() {
+        const cpf = document.getElementById("cpf").value.trim();
+        const nome = document.getElementById("nome").value.trim();
+        let first = null;
+
+        if (!/^\d{11}$/.test(cpf)) {
+          setFieldError("cpf", "cpf-err", "CPF deve ter 11 dígitos.");
+          first = first || "cpf";
+        } else setFieldError("cpf", "cpf-err", "");
+
+        if (nome.length < 2) {
+          setFieldError("nome", "nome-err", "Informe o nome.");
+          first = first || "nome";
+        } else setFieldError("nome", "nome-err", "");
+
+        if (first) {
+          document.getElementById(first).focus();
+          return false;
+        }
+        return true;
+      }
+
+      async function atualizaListaMotoristas() {
+        try {
+          loadingStart();
+          const response = await window.__AUTH__.callApi("/motorista");
+          if (response.status == 401) {
+            alert("login expirado");
+            window.__AUTH__.goTo("/login");
+            return;
+          }
+          if (!response.ok) {
+            exibirMensagemDeAviso(
+              slotAvisos,
+              "Não foi possível localizar os motoristas cadastrados"
+            );
+            return;
+          }
+
+          window.motoristas = await response.json();
+          const tbody = document.querySelector("#table-motoristas tbody");
+          let itens = "";
+          for (const m of motoristas) {
+            itens += `
+              <tr>
+                <td data-title="CPF"><span class="font-monospace">${m.cpf}</span></td>
+                <td data-title="Nome">${m.nome}</td>
+                <td class="text-end">
+                  <button type="button" class="btn btn-sm btn-primary" onClick="editarMotorista('${m.cpf}')" aria-label="Editar motorista ${m.nome}">
+                    <i class="bi bi-pencil-square"></i> <span class="d-none d-md-inline">Editar</span>
+                  </button>
+                </td>
+              </tr>`;
+          }
+          tbody.innerHTML =
+            itens ||
+            `<tr><td colspan="3" class="text-center text-secondary py-3">Nenhum motorista cadastrado</td></tr>`;
+        } catch {
+          exibirMensagemDeAviso(
+            slotAvisos,
+            "Não foi possível localizar os motoristas cadastrados"
+          );
+        } finally {
+          loadingStop();
+        }
+      }
+
+      function resetarFormulario() {
+        document.getElementById("method").value = "post";
+        document.getElementById("nome").value = "";
+        document.getElementById("cpf").value = "";
+        document.getElementById("cpf").removeAttribute("disabled");
+        setFieldError("cpf", "cpf-err", "");
+        setFieldError("nome", "nome-err", "");
+      }
+
+      function editarMotorista(cpf) {
+        const m = (window.motoristas || []).find((x) => x.cpf == cpf);
+        if (!m) return;
+        document.getElementById("method").value = "put";
+        document.getElementById("nome").value = m.nome;
+        document.getElementById("cpf").value = cpf;
+        document.getElementById("cpf").setAttribute("disabled", "");
+        document.getElementById("nome").focus();
+      }
+
+      document.querySelector("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!validateClient()) return;
+
+        loadingStart();
+        const method = document.getElementById("method").value;
+        const nome = document.getElementById("nome").value.trim();
+        const cpf = document.getElementById("cpf").value.trim().toUpperCase();
+        const path = method === "put" ? `/motorista/${cpf}` : "/motorista";
+
+        try {
+          const r = await window.__AUTH__.callApi(path, {
+            method,
+            body: JSON.stringify({ cpf, nome }),
+          });
+          if (r.status == 401) {
+            alert("login expirado");
+            window.__AUTH__.goTo("/login");
+            return;
+          }
+          if (r.status == 400) {
+            let message = "Verifique os dados.";
+            try {
+              ({ message } = await r.json());
+            } catch {}
+            setFieldError("cpf", "cpf-err", "Verifique os dados.");
+            setFieldError("nome", "nome-err", "Verifique os dados.");
+            exibirMensagemDeAviso(slotAvisos, message);
+            return;
+          }
+          if (!r.ok) {
+            exibirMensagemDeAviso(
+              slotAvisos,
+              "Não foi possível salvar os dados desse motorista"
+            );
+            return;
+          }
+
+          exibirMensagemDeSucesso(slotAvisos, "Motorista salvo");
+          resetarFormulario();
+          await atualizaListaMotoristas();
+        } catch {
+          exibirMensagemDeErro(
+            slotAvisos,
+            "Erro ao salvar os dados. Tente novamente."
+          );
+        } finally {
+          loadingStop();
+        }
+      });
+
+      (async function onLoad() {
+        await atualizaListaMotoristas();
+      })();
+    </script>
+
+    <script src="../public/header.js" defer></script>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+      crossorigin="anonymous"
+    ></script>
+  </body>
 </html>

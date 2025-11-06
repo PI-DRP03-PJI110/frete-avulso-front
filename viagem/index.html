@@ -1,758 +1,961 @@
 <!DOCTYPE html>
 <html lang="pt">
-
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="">
-	<title>cadastro de viagens</title>
-
-	<script lang="javascript">
-		var appPath = "/frete-avulso-front";
-		var apiUrl = "https://frete-avulso-back.onrender.com"
-
-		function goTo(path) {
-			location.href = location.origin + appPath + path;
-		}
-
-		async function callApi(path, options) {
-			let token = sessionStorage.getItem("token")
-			options = {
-				...options,
-				headers: {
-					'content-type': "application/json",
-					Authorization: `Bearer ${token}`
-				}
-			}
-			return fetch(apiUrl + path, options)
-		}
-
-		var token = sessionStorage.getItem("token")
-		if (!token || token.length == 0) {
-			goTo("/login")
-		}
-	</script>
-
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-	      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-
-	<link rel="stylesheet" href="../dark.css">
-
-	<style>
-		.overlay {
-			position: fixed;
-			z-index: 4;
-			width: 100%;
-			height: 100%;
-			top: 0;
-			left: 0;
-			background: #cccccc80;
-		}
-
-		.table-w-auto-ajust {
-			min-width: 100%;
-		}
-
-		/* Estilos para o popup */
-		.popup {
-			display: none;
-			position: fixed;
-			top: 50%;
-			left: 50%;
-			transform: translate(-50%, -50%);
-			background-color: #fff;
-			padding: 20px;
-			border-radius: 10px;
-			box-shadow: 0 0 20px 10px rgba(0, 0, 0, 0.2);
-			max-width: 95%;
-			z-index: 3;
-			width: 500px;
-			border: solid 1px #909090;
-		}
-
-		/* Estilos para o botão de fechar */
-		.close {
-			position: absolute;
-			top: 10px;
-			right: 10px;
-			font-size: 20px;
-			color: #aaa;
-			cursor: pointer;
-		}
-
-		.close:hover {
-			color: #555;
-		}
-
-		@media (min-width: 576px) {
-			.table-w-auto-ajust {
-				min-width: 200px;
-			}
-		}
-
-		@media (min-width: 768px) {
-			.table-w-auto-ajust {
-				min-width: 400px;
-			}
-			.popup{
-				width: 800px;
-			}
-		}
-
-		@media (min-width: 992px) {
-			.table-w-auto-ajust {
-				min-width: 600px;
-			}
-		}
-
-		@media (min-width: 1200px) {
-			.table-w-auto-ajust {
-				min-width: 800px;
-			}
-		}
-
-	</style>
-	<script lang="javascript">
-
-		function exibirMensagemDeErro(ancora, menssagem) {
-			exibirAlerta(ancora, 'danger', menssagem)
-		}
-
-		function exibirMensagemDeAviso(ancora, menssagem) {
-			exibirAlerta(ancora, 'warning', menssagem)
-		}
-
-		function exibirMensagemDeSucesso(ancora, menssagem) {
-			exibirAlerta(ancora, 'success', menssagem)
-		}
-
-		function exibirAlerta(ancora, tipo, menssagem) {
-			const wrapper = document.createElement('div')
-			wrapper.innerHTML = [
-				`<div class="alert alert-${tipo} alert-dismissible alert-dismissible fade show d-flex align-items-center" role="alert">`,
-				`   <div>${menssagem}</div>`,
-				'   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
-				'</div>'
-			].join('')
-			ancora.append(wrapper)
-		}
-
-		function loadingStart() {
-			let overlay = document.querySelector(`div.overlay`);
-			overlay.classList.remove("d-none");
-			overlay.classList.add("d-flex");
-		}
-
-		function loadingStop() {
-			let overlay = document.querySelector(`div.overlay`);
-			overlay.classList.add("d-none");
-			overlay.classList.remove("d-flex");
-		}
-	</script>
-</head>
-
-
-<body>
-<nav class="navbar navbar-expand-lg bg-body-secondary">
-	<button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
-	        aria-controls="offcanvasNavbar">
-		<span class="navbar-toggler-icon"></span>
-	</button>
-	<div class="d-flex flex-grow-1 flex-md-grow-0 justify-content-center justify-content-md-start">
-		<h1 class="navbar-brand h-3"></h1>
-	</div>
-	<div class="offcanvas offcanvas-start flex-grow-0" tabindex="-1" id="offcanvasNavbar"
-	     aria-labelledby="offcanvasNavbarLabel">
-		<div class="offcanvas-header">
-			<h5 class="offcanvas-title" id="offcanvasNavbarLabel">Menu</h5>
-			<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-		</div>
-		<div class="offcanvas-body">
-			<ul class="navbar-nav justify-content-start pe-3">
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link" href="/frete-avulso-front/viagens">Viagens</a>
-				</li>
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link disabled" href="/frete-avulso-front/viagem">+ Viagem</a>
-				</li>
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link" href="/frete-avulso-front/motorista">+ Motorista</a>
-				</li>
-				<li class="nav-item d-block d-md-none">
-					<a class="nav-link" href="/frete-avulso-front/veiculos">+ Veículo</a>
-				</li>
-
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/viagens">Viagens</a>
-				</li>
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1 disabled" href="/frete-avulso-front/viagem">+ Viagem</a>
-				</li>
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1" href="/frete-avulso-front/motorista">+ Motorista</a>
-				</li>
-				<li class="nav-item d-none d-md-block">
-					<a class="btn btn-outline-dark mx-1 " href="/frete-avulso-front/veiculos">+ Veículo</a>
-				</li>
-			</ul>
-		</div>
-	</div>
-	<div class="d-flex align-self-auto mx-auto">
-	</div>
-	<div class="d-flex justify-content-md-end me-3">
-		<div class="form-check form-switch">
-			<input class="form-check-input" type="checkbox" role="switch" id="switch-theme" onclick="toggleThemeInput(this)">
-			<label class="form-check-label" for="switch-theme">Modo escuro</label>
-		</div>
-	</div>
-</nav>
-<main class="container-fluid container-md">
-	<div id="mensagem-erro" class="mt-3"></div>
-	<section class="d-flex align-items-center justify-content-center mt-5">
-		<h1 class="h2">Cadastro de Viagem</h1>
-	</section>
-	<section>
-		<form>
-			<div class="row justify-content-md-center align-items-end">
-				<input type="hidden" name="method" id="method" value="post">
-				<input type="hidden" name="id" id="id">
-				<div class="col-12 col-md mt-3">
-					<label for="solicitante" class="form-label">Solicitante</label>
-					<input name="solicitante" id="solicitante" type="text" class="form-control"
-					       placeholder="Empresa solicitante" aria-label="solicitante">
-				</div>
-				<div class="col-12 col-md mt-3">
-					<label for="origem" class="form-label">Origem</label>
-					<input name="origem" id="origem" type="text" class="form-control" placeholder="origem do trajeto"
-					       aria-label="origem">
-				</div>
-				<div class="col-12 col-md mt-3">
-					<label for="destino" class="form-label">Destino</label>
-					<input name="destino" id="destino" type="text" class="form-control" placeholder="destino do trajeto"
-					       aria-label="destino">
-				</div>
-			</div>
-			<div class="row justify-content-md-center align-items-end">
-				<div class="col-12 col-md-3 mt-3">
-					<label for="motorista" class="form-label">Motorista</label>
-					<select class="form-select" name="motorista" id="motorista" type="text" aria-label="motorista" onchange="preencheVeiculo()">
-					</select>
-				</div>
-				<div class="col-12 col-md-3 mt-3">
-					<label for="placa" class="form-label">Veículo</label>
-					<select class="form-select" name="placa" id="placa" type="text" aria-label="veiculo">
-					</select>
-				</div>
-				<div class="col-12 col-md-2 mt-3">
-					<label for="data" class="form-label">Data</label>
-					<input name="data" id="data" type="date" class="form-control" aria-label="data">
-				</div>
-				<div class="col-12 col-md-2 mt-3">
-
-					<label for="valor" class="form-label">Valor</label>
-					<div class="input-group">
-						<span class="input-group-text">$</span>
-						<input name="valor" id="valor" type="number" step="any" class="form-control" placeholder="00.0000,00"
-						       aria-label="valor">
-					</div>
-				</div>
-				<div class="col-12 col-md-2 mt-3">
-					<label for="nf" class="form-label">Nota fiscal</label>
-					<input name="nf" id="nf" type="text" class="form-control" aria-label="nf-e">
-				</div>
-			</div>
-			<div class="row justify-content-md-center align-items-start">
-				<div class="col-12 col-md mt-3">
-					<label for="carga" class="form-label">Carga</label>
-					<textarea name="carga" id="carga" class="form-control"
-					          placeholder="Descrição da carga transportada" aria-label="carga"></textarea>
-				</div>
-
-				<div class="col-12 col-md mt-3">
-					<span class="form-label">Despesa</span>
-					<div class=" table-responsive">
-						<table id="table-despesas" class="table align-middle table-striped table-hover table-sm table-responsive">
-							<thead>
-								<tr>
-									<th scope="col">Descrição</th>
-									<th scope="col">Valor</th>
-									<th scope="col"></th>
-								</tr>
-							</thead>
-							<tbody>
-							</tbody>
-						</table>
-					</div>
-					<button id="btn-despesa" class="btn btn-sm btn-secondary  m-2" disabled type="button" onclick="abrirDespesa()">+ Despesa</button>
-				</div>
-			</div>
-			<div class="d-flex flex-row mt-3 justify-content-between align-items-end">
-				<button class="btn btn-secondary" id="btn-excluir" type="button" disabled onclick="console.log">Excluir</button>
-				<button class="btn btn-primary" type="button" onclick="salvarViagem()">Salvar</button>
-			</div>
-		</form>
-	</section>
-	<div class="modal" id="modal-pos-salvar" tabindex="-1">
-		<div class="modal-dialog modal-dialog-centered">
-			<div class="modal-content">
-				<div class="modal-header">
-					<h1 class="modal-title fs-5">Salvo com sucesso!</h1>
-					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-				</div>
-				<div class="modal-body">
-					<p>O que você deseja fazer?</p><p>Votlar para a listagem de viagens cadastradas?</p><p>Ou cadastrar uma nova viagem?</p>
-				</div>
-				<div class="modal-footer d-flex justify-content-between">
-					<button type="button" class="btn btn-secondary d-flex " onclick="goTo('/viagens')">Voltar para a Listagem</button>
-					<button type="button" class="btn btn-primary d-flex" onclick="goTo('/viagem')">Cadastrar novo</button>
-				</div>
-			</div>
-		</div>
-	</div>
-</main>
-
-<!-- Div do popup -->
-<div id="popup" class="popup">
-	<!-- Conteúdo do popup será preenchido dinamicamente -->
-</div>
-
-<div class="overlay d-flex align-items-center justify-content-center d-none">
-	<div class="loading d-flex justify-content-center">
-		<div class="spinner-border text-primary spinner-border-sm" role="status"
-		     style="width: 3rem; height: 3rem;">
-		</div>
-	</div>
-</div>
-<script lang="javascript">
-
-	function toggleThemeInput(e){
-		sessionStorage.setItem("darktheme", e.checked)
-		if(e.checked){
-			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "dark")
-		}
-		else {
-			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "light")
-		}
-	}
-	(function init(){
-		let isDark = sessionStorage.getItem("darktheme") === 'true'
-
-		document.getElementById("switch-theme").checked = isDark;
-		if(isDark){
-			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "dark")
-		}
-		else {
-			document.getElementsByTagName("body")[0].setAttribute("data-bs-theme", "light")
-		}
-	})()
-
-	window.veiculos = []
-	var slotAvisos = document.querySelector("#mensagem-erro")
-
-	function preencheVeiculo(){
-		let cpf = document.getElementById("motorista").value;
-		let veiculoDoMotorista =  veiculos.find(v => v.cpf_motorista === cpf);
-		if (veiculoDoMotorista){
-			document.getElementById("placa").value = veiculoDoMotorista.placa;
-		}
-	}
-
-	async function buscarMotoristas() {
-		try {
-			let response = await callApi("/motorista")
-			if (response.status == 401) {
-				alert("login expirado")
-				goTo("/login")
-				return
-			}
-			if (!response.ok) {
-				exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os motoristas cadastrados")
-				return
-			}
-			window.motoristas = await response.json();
-			let selectMotoristas = document.getElementById("motorista");
-
-			for (let motorista of motoristas) {
-				let option = document.createElement("option");
-				option.text = motorista.nome;
-				option.value = motorista.cpf;
-				selectMotoristas.appendChild(option);
-			}
-
-		} catch (e) {
-			exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os motoristas cadastrados")
-		}
-
-	}
-
-	async function buscarVeiculos() {
-		try {
-			let response = await callApi("/veiculo")
-			if (response.status == 401) {
-				alert("login expirado")
-				goTo("/login")
-				return
-			}
-			if (!response.ok) {
-				exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os veiculos cadastrados")
-				return
-			}
-			window.veiculos = await response.json();
-			let selectVeiculos = document.getElementById("placa");
-
-			for (let veiculo of veiculos) {
-				let option = document.createElement("option");
-				option.text = veiculo.placa + " - " + veiculo.descricao;
-				option.value = veiculo.placa;
-				selectVeiculos.appendChild(option);
-			}
-
-		} catch (e) {
-			exibirMensagemDeAviso(document.querySelector("#mensagem-erro"), "Não foi possível localizar os motoristas cadastrados")
-		}
-	}
-
-	function habilitaExcluir(id){
-		document.getElementById("btn-excluir").setAttribute("onclick", `excluirViagem(${id})`);
-		document.getElementById("btn-excluir").classList.add("btn-danger");
-		document.getElementById("btn-excluir").classList.remove("btn-secondary");
-		document.getElementById("btn-excluir").removeAttribute("disabled");
-	}
-
-	
-	function habilitaBtnDespesa(){
-		document.getElementById("btn-despesa").classList.add("btn-danger");
-		document.getElementById("btn-despesa").classList.remove("btn-secondary");
-		document.getElementById("btn-despesa").removeAttribute("disabled");
-	}
-
-	function desabilitaExcluir() {
-		document.getElementById("btn-excluir").removeAttribute("onclick");
-		document.getElementById("btn-excluir").classList.remove("btn-danger");
-		document.getElementById("btn-excluir").classList.add("btn-secondary");
-		document.getElementById("btn-excluir").setAttribute("disabled", "");
-	}
-
-	
-	function desabilitaBtnDespesa(){
-		document.getElementById("btn-despesa").classList.remove("btn-danger");
-		document.getElementById("btn-despesa").classList.add("btn-secondary");
-		document.getElementById("btn-despesa").setAttribute("disabled", "");
-	}
-
-	function resetarFormulario() {
-		document.getElementById("method").value = "post"
-		document.getElementById("id").value = ""
-		document.getElementById("solicitante").value = ""
-		document.getElementById("origem").value = ""
-		document.getElementById("destino").value = ""
-		document.getElementById("motorista").value = ""
-		document.getElementById("placa").value = ""
-		document.getElementById("data").value = ""
-		document.getElementById("valor").value = ""
-		document.getElementById("nf").value = ""
-		document.getElementById("carga").value = ""
-
-		desabilitaExcluir()
-		desabilitaBtnDespesa()
-	}
-
-	async function editarViagem(id) {
-		try {
-			loadingStart();
-			let respostaApi = await callApi(`/viagem/${id}`)
-			if (respostaApi.status == 401) {
-				alert("login expirado")
-				goTo("/login")
-				return
-			}
-
-			if (!respostaApi.ok) {
-				exibirMensagemDeAviso(slotAvisos, "Não foi possível consultar os dados dessa viagem")
-				return
-			}
-
-			window.viagemAEditar = await respostaApi.json();
-			document.getElementById("method").value = "put"
-			document.getElementById("id").value = viagemAEditar.id
-			document.getElementById("solicitante").value = viagemAEditar.solicitante ?? ""
-			document.getElementById("origem").value = viagemAEditar.origem
-			document.getElementById("destino").value = viagemAEditar.destino
-			document.getElementById("motorista").value = viagemAEditar.cpf_motorista
-			document.getElementById("placa").value = viagemAEditar.placa
-			document.getElementById("data").value = viagemAEditar.data_viagem
-			document.getElementById("valor").value = viagemAEditar.valor
-			document.getElementById("nf").value = viagemAEditar.nf
-			document.getElementById("carga").value = viagemAEditar.carga;
-
-			await preencheTabelaDespesas(id)
-			habilitaExcluir(id)
-			habilitaBtnDespesa()
-
-		} catch (error) {
-			exibirMensagemDeAviso(slotAvisos, "Desculpe, não foi possível trazer os dados dessa viagem. Tente novamente mais tarde.")
-		} finally {
-			loadingStop()
-		}
-	}
-
-	async function preencheTabelaDespesas(id){
-		
-		let tableDespesas = document.getElementById("table-despesas")
-
-		let respostaApidespesa = await callApi(`/viagem/${id}/despesas`)
-		if (respostaApidespesa.status == 401) {
-			alert("login expirado")
-			goTo("/login")
-			return
-		}
-
-		if (!respostaApidespesa.ok) {
-			exibirMensagemDeAviso(slotAvisos, "Não foi possível consultar os despesas dessa viagem")
-			return
-		}
-
-		window.viagemAEditar.despesas = await respostaApidespesa.json();
-		let itens = ""
-
-		for (let despesa of viagemAEditar.despesas) {
-			despesa.valorFormatado = despesa.valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})
-			itens += `<tr>
-						<td data-title="Descricao">${despesa.descricao}</td>
-						<td data-title="Valor">${despesa.valorFormatado}</td>
-						<td data-title="acao"><button class="btn btn-sm btn-primary" onclick="abrirDespesa(${despesa.ID})">
-							<li class="fas fa-pencil-alt icon"></li>
-						</button></td>
-					</tr>`
-		}
-
-		tableDespesas.tBodies[0].innerHTML = itens
-	}
-
-	function abrirDespesa(id) {
-		let ID_viagem = document.getElementById("id").value
-		document.getElementById("popup").innerHTML = `
-				<form name="despesa">
-					<div class="row justify-content-md-center">
-						<h2>Cadastro de despesa </h2>
-					</div>
-					<div class="row justify-content-md-center align-items-end">
-						<input type="hidden" name="method" id="method" value="post">
-						<input type="hidden" name="id" id="id">
-						<input type="hidden" name="ID_viagem" id="ID_viagem" value="${ID_viagem}">
-						<div class="col-12 col-md mt-3">
-							<label for="descricao" class="form-label">Descrição</label>
-							<input name="descricao" id="descricao" type="text" class="form-control" placeholder="Descrição da despesa"
-							       aria-label="descricao">
-						</div>
-						<div class="col-12 col-md-3 mt-3">
-							<label for="valor" class="form-label">Valor</label>
-							<div class="input-group">
-								<span class="input-group-text">$</span>
-								<input name="valor" id="valor" type="number" step="any" class="form-control" placeholder="00.0000,00"
-							       aria-label="valor">
-							</div>
-						</div>
-					</div>
-					<div class="row justify-content-end align-items-end">
-						<div class="col-12 col-md-3 justify-content-end align-items-end text-end">
-							<button class="btn btn-sm btn-primary m-2" type="button" onclick="salvarDespesa()">Salvar</button>
-						</div>
-					</div>
-				</form>
-			`;
-		// Adicionando botão de fechar após carregar o conteúdo do popup
-		document.getElementById("popup").innerHTML += "<span class='close' onclick='closePopup()'> X</span>";
-		if(!!id){
-			document.querySelector(`form[name="despesa"] #id`).value = id
-			document.querySelector(`form[name="despesa"] #method`).value = "put"
-			
-			let desp = window.viagemAEditar.despesas.find(d => d.ID == id);
-			document.querySelector(`form[name="despesa"] #descricao`).value = desp.descricao;
-			document.querySelector(`form[name="despesa"] #valor`).value = desp.valor;
-
-		}
-		document.getElementById("popup").style.display = "block";
-		
-	}
-
-	function closePopup() {
-		document.getElementById("popup").style.display = "none";
-	}
-
-	async function salvarDespesa(){
-		loadingStart()
-		let descricao = document.querySelector(`form[name="despesa"] #descricao`).value
-		let ID_viagem = document.querySelector(`form[name="despesa"] #ID_viagem`).value
-		let id = document.querySelector(`form[name="despesa"] #id`).value
-		let valor = document.querySelector(`form[name="despesa"] #valor`).value;
-		let cpf_user = sessionStorage.getItem("user");
-
-		let method = document.querySelector(`form[name="despesa"] #method`).value;
-		let path = method === "put" ? `/despesa/${id}` : "/despesa"
-	
-
-		try {
-			var respostaApi = await callApi(path, {
-				method,
-				body: JSON.stringify({
-					ID_despesa: id,
-					descricao,
-					valor,
-					ID_viagem,
-					cpf_user
-				})
-			})
-
-			if (respostaApi.status == 401) {
-				alert("login expirado")
-				goTo("/login")
-				return
-			}
-
-			if (respostaApi.status == 400) {
-				let {message} = await respostaApi.json();
-				exibirMensagemDeAviso(slotAvisos, message)
-				return
-			}
-
-			if (!respostaApi.ok) {
-				exibirMensagemDeAviso(slotAvisos, "Não foi possível salvar os dados dessa viagem")
-				return
-			}
-			exibirMensagemDeSucesso(slotAvisos, "Despesa salva")
-			closePopup()
-			await preencheTabelaDespesas(ID_viagem)
-			
-		} catch (error) {
-			alert("Desculpe, não foi possível cadastrar a viagem. Tente novamente mais tarde.")
-
-		} finally {
-			loadingStop()
-		}
-	}
-  
-	async function excluirViagem(id) {
-		if (window.confirm("Tem certeza que deseja excluir essa viagem? \nEssa operação é irreversível!")) {
-			try {
-				loadingStart();
-				let respostaApi = await callApi(`/viagem/${id}`,{method: 'delete'})
-				if (respostaApi.status == 401) {
-					alert("login expirado")
-					goTo("/login")
-					return
-				}
-
-				if (!respostaApi.ok) {
-					exibirMensagemDeAviso(slotAvisos, "Não foi possível excluir essa viagem")
-					return
-				}
-
-				alert('Excluído com sucesso');
-				loadingStop() ;
-				goTo("/viagens");
-
-			} catch (error) {
-				exibirMensagemDeAviso("Desculpe, Não foi possível excluir essa viagem. Tente novamente mais tarde.")
-				loadingStop();
-			}
-		}
-	}
-
-	let formulario = document.querySelector("form");
-
-	formulario.addEventListener("submit", async (e) => {
-		e.preventDefault()
-	});
-
-	async function salvarViagem() {
-		
-		loadingStart()
-		let method = document.getElementById("method").value;
-		let id = document.getElementById("id").value;
-		let solicitante = document.getElementById("solicitante").value;
-		let origem = document.getElementById("origem").value;
-		let destino = document.getElementById("destino").value;
-		let cpf_motorista = document.getElementById("motorista").value;
-		let placa = document.getElementById("placa").value;
-		let data_viagem = document.getElementById("data").value;
-		let valor = document.getElementById("valor").value;
-		let nf = document.getElementById("nf").value;
-		let carga = document.getElementById("carga").value;
-
-		let path = method === "put" ? `/viagem/${id}` : "/viagem"
-		let cpf_user = sessionStorage.getItem("user");
-
-		try {
-			var respostaApi = await callApi(path, {
-				method,
-				body: JSON.stringify({
-					solicitante,
-					origem,
-					destino,
-					cpf_motorista,
-					placa,
-					data_viagem,
-					valor,
-					nf,
-					carga,
-					cpf_user
-				})
-			})
-
-			if (respostaApi.status == 401) {
-				alert("login expirado")
-				goTo("/login")
-				return
-			}
-
-			if (respostaApi.status == 400) {
-				let {message} = await respostaApi.json();
-				exibirMensagemDeAviso(slotAvisos, message)
-				return
-			}
-
-			if (!respostaApi.ok) {
-				exibirMensagemDeAviso(slotAvisos, "Não foi possível salvar os dados dessa viagem")
-				return
-			}
-			exibirMensagemDeSucesso(slotAvisos, "Viagem salva");
-
-			loadingStop();
-
-			let modalSucesso = new bootstrap.Modal(document.getElementById('modal-pos-salvar'), {});
-			modalSucesso.show();
-
-		} catch (error) {
-			exibirMensagemDeAviso(slotAvisos, "Desculpe, não foi possível cadastrar a viagem. Tente novamente mais tarde.");
-		} finally {
-			loadingStop();
-		}
-
-	};
-
-	(async function onLoad(){
-		loadingStart();
-		await buscarMotoristas()
-		await buscarVeiculos()
-
-		let queryString = new URLSearchParams(window.location.search);
-		if (!!queryString.get('id')) {
-			await editarViagem(queryString.get('id'))
-		}
-		preencheVeiculo()
-		loadingStop()
-	})()
-
-</script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
-        crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
-        integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
-        crossorigin="anonymous"></script>
-
-</body>
-
+  <head>
+    <meta charset="utf-8" />
+    <title>Viagem • Gestão de viagens</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <script>
+      window.APP_PATH = "/frete-avulso-front";
+      window.API_URL =
+        location.hostname === "localhost" || location.hostname === "127.0.0.1"
+          ? "http://127.0.0.1:5000"
+          : "https://frete-avulso-back.onrender.com";
+    </script>
+    <script src="../auth.js"></script>
+    <script>
+      (async () => {
+        await window.__AUTH__.requireAuth();
+      })();
+    </script>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../dark.css" />
+    <link rel="stylesheet" href="../public/header.css" />
+
+    <style>
+      :root {
+        --card-radius: 16px;
+        --shadow-1: 0 8px 24px rgba(0, 0, 0, 0.08);
+        --shadow-2: 0 16px 40px rgba(0, 0, 0, 0.14);
+      }
+      [data-bs-theme="dark"] {
+        --shadow-1: 0 8px 24px rgba(0, 0, 0, 0.45);
+        --shadow-2: 0 16px 40px rgba(0, 0, 0, 0.6);
+      }
+
+      main {
+        margin-top: var(--app-header-h, 64px);
+      }
+
+      .page-wrap {
+        padding-block: clamp(16px, 2.5vw, 28px);
+        max-width: 1024px;
+      }
+      .page-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .page-title {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .tag-soft {
+        border: 1px solid var(--bs-border-color);
+        background: var(--bs-tertiary-bg);
+        color: var(--bs-emphasis-color);
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+      }
+      .hint {
+        color: var(--bs-secondary-color);
+      }
+
+      .sheet {
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: var(--card-radius);
+        box-shadow: var(--shadow-1);
+      }
+      .sheet:hover {
+        box-shadow: var(--shadow-2);
+      }
+      .sheet-header {
+        padding: 1rem 1.25rem 0.75rem;
+        border-bottom: 1px dashed var(--bs-border-color);
+      }
+      .sheet-body {
+        padding: 1rem 1.25rem 1.25rem;
+      }
+
+      .form-grid {
+        display: grid;
+        gap: 0.9rem;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 768px) {
+        .form-grid {
+          grid-template-columns: repeat(12, 1fr);
+          align-items: end;
+        }
+        .col-span-4 {
+          grid-column: span 4;
+        }
+        .col-span-3 {
+          grid-column: span 3;
+        }
+        .col-span-2 {
+          grid-column: span 2;
+        }
+        .col-span-6 {
+          grid-column: span 6;
+        }
+        .col-span-12 {
+          grid-column: span 12;
+        }
+      }
+
+      .form-control:focus,
+      .form-select:focus,
+      textarea.form-control:focus {
+        border-color: rgba(var(--bs-primary-rgb), 0.45);
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+      }
+      textarea.form-control {
+        min-height: 110px;
+      }
+
+      .data-card {
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: var(--card-radius);
+        box-shadow: var(--shadow-1);
+      }
+      .table > thead th {
+        border-bottom: 1px solid var(--bs-border-color);
+      }
+      .table-striped > tbody > tr:nth-of-type(odd) > * {
+        background-color: var(--bs-tertiary-bg) !important;
+      }
+      .table-hover tbody tr:hover > * {
+        background-color: rgba(var(--bs-primary-rgb), 0.08) !important;
+      }
+
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-top: 1px solid var(--bs-border-color);
+        border-bottom-left-radius: var(--card-radius);
+        border-bottom-right-radius: var(--card-radius);
+        background: var(--bs-body-bg);
+      }
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--bs-border-color);
+      }
+      .btn-ghost:hover {
+        border-color: rgba(var(--bs-primary-rgb), 0.45);
+        background: var(--bs-tertiary-bg);
+      }
+
+      .popup {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: 12px;
+        padding: 1rem;
+        max-width: 95%;
+        width: 680px;
+        z-index: 1056;
+        box-shadow: var(--shadow-2);
+      }
+      .popup .close {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+      }
+
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: #00000033;
+        z-index: 1055;
+      }
+
+      :focus {
+        outline: 2px solid
+          color-mix(in srgb, var(--bs-primary), transparent 55%);
+        outline-offset: 2px;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <a class="visually-hidden-focusable" href="#main">Pular para o conteúdo</a>
+
+    <main
+      id="main"
+      class="container page-wrap"
+      role="main"
+      tabindex="-1"
+      aria-labelledby="page-title"
+    >
+      <div id="mensagem-erro" class="mb-3" aria-live="assertive"></div>
+
+      <div class="page-head">
+        <div class="page-title h4 m-0">
+          <i class="bi bi-pin-map"></i>
+          <span id="page-title">Cadastro de viagem</span>
+          <span class="tag-soft">Formulário & despesas</span>
+        </div>
+        <div class="d-flex gap-2">
+          <a class="btn btn-ghost" href="../viagens"
+            ><i class="bi bi-arrow-left-short"></i> Voltar</a
+          >
+        </div>
+      </div>
+      <div class="hint mb-3">
+        Preencha os dados, salve e (opcionalmente) adicione despesas.
+      </div>
+
+      <section class="sheet mb-4" aria-labelledby="form-title">
+        <div class="sheet-header">
+          <h2 class="h6 m-0" id="form-title">Dados da viagem</h2>
+        </div>
+        <div class="sheet-body">
+          <form novalidate>
+            <input type="hidden" name="method" id="method" value="post" />
+            <input type="hidden" name="id" id="id" />
+
+            <div class="form-grid">
+              <div class="col-span-4">
+                <label for="solicitante" class="form-label">Solicitante</label>
+                <input
+                  name="solicitante"
+                  id="solicitante"
+                  type="text"
+                  class="form-control"
+                  placeholder="Empresa solicitante"
+                  autocomplete="organization"
+                />
+              </div>
+
+              <div class="col-span-4">
+                <label for="origem" class="form-label">Origem</label>
+                <input
+                  name="origem"
+                  id="origem"
+                  type="text"
+                  class="form-control"
+                  placeholder="Origem do trajeto"
+                  autocomplete="off"
+                />
+              </div>
+
+              <div class="col-span-4">
+                <label for="destino" class="form-label">Destino</label>
+                <input
+                  name="destino"
+                  id="destino"
+                  type="text"
+                  class="form-control"
+                  placeholder="Destino do trajeto"
+                  autocomplete="off"
+                />
+              </div>
+
+              <div class="col-span-3">
+                <label for="motorista" class="form-label">Motorista</label>
+                <select
+                  class="form-select"
+                  name="motorista"
+                  id="motorista"
+                  aria-label="Selecionar motorista"
+                  onchange="preencheVeiculo()"
+                ></select>
+              </div>
+
+              <div class="col-span-3">
+                <label for="placa" class="form-label">Veículo</label>
+                <select
+                  class="form-select"
+                  name="placa"
+                  id="placa"
+                  aria-label="Selecionar veículo"
+                ></select>
+              </div>
+
+              <div class="col-span-2">
+                <label for="data" class="form-label">Data</label>
+                <input name="data" id="data" type="date" class="form-control" />
+              </div>
+
+              <div class="col-span-2">
+                <label for="valor" class="form-label">Valor</label>
+                <div class="input-group">
+                  <span class="input-group-text" aria-hidden="true">R$</span>
+                  <input
+                    name="valor"
+                    id="valor"
+                    type="number"
+                    step="any"
+                    class="form-control"
+                    placeholder="0,00"
+                    inputmode="decimal"
+                  />
+                </div>
+              </div>
+
+              <div class="col-span-2">
+                <label for="nf" class="form-label">Nota fiscal</label>
+                <input
+                  name="nf"
+                  id="nf"
+                  type="text"
+                  class="form-control"
+                  autocomplete="off"
+                />
+              </div>
+
+              <div class="col-span-12">
+                <label for="carga" class="form-label">Carga</label>
+                <textarea
+                  name="carga"
+                  id="carga"
+                  class="form-control"
+                  placeholder="Descrição da carga transportada"
+                ></textarea>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="data-card">
+        <div
+          class="sheet-header d-flex align-items-center justify-content-between"
+        >
+          <h2 class="h6 m-0">Despesas</h2>
+          <button
+            id="btn-despesa"
+            class="btn btn-outline-success btn-sm"
+            disabled
+            type="button"
+            onclick="abrirDespesa()"
+            aria-label="Adicionar despesa"
+          >
+            <i class="bi bi-plus-lg"></i> Despesa
+          </button>
+        </div>
+        <div class="sheet-body">
+          <div class="table-responsive">
+            <table
+              id="table-despesas"
+              class="table table-striped table-hover align-middle mb-0"
+            >
+              <caption class="text-start">
+                Lista de despesas da viagem
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Descrição</th>
+                  <th scope="col" style="width: 160px">Valor</th>
+                  <th scope="col" class="text-end" style="width: 120px">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="actions">
+            <button
+              class="btn btn-outline-danger"
+              id="btn-excluir"
+              type="button"
+              disabled
+              aria-label="Excluir viagem"
+            >
+              Excluir
+            </button>
+            <button
+              class="btn btn-primary"
+              type="button"
+              onclick="salvarViagem()"
+              aria-label="Salvar viagem"
+            >
+              Salvar
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div
+      id="popup"
+      class="popup"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="popup-title"
+      aria-hidden="true"
+      tabindex="-1"
+    ></div>
+
+    <div
+      class="overlay d-flex align-items-center justify-content-center d-none"
+      aria-hidden="true"
+    >
+      <div class="loading d-flex justify-content-center">
+        <div
+          class="spinner-border text-primary spinner-border-sm"
+          role="status"
+          aria-label="Carregando"
+          style="width: 3rem; height: 3rem"
+        ></div>
+      </div>
+    </div>
+
+    <script>
+      (function init() {
+        const isDark = sessionStorage.getItem("darktheme") === "true";
+        document.body.setAttribute("data-bs-theme", isDark ? "dark" : "light");
+      })();
+
+      window.veiculos = [];
+      const slotAvisos = document.querySelector("#mensagem-erro");
+
+      function exibirAlerta(ancora, tipo, mensagem) {
+        const w = document.createElement("div");
+        w.innerHTML = [
+          `<div class="alert alert-${tipo} alert-dismissible fade show d-flex align-items-center" role="alert" aria-live="assertive" aria-atomic="true" tabindex="-1">`,
+          `  <div>${mensagem}</div>`,
+          `  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>`,
+          `</div>`,
+        ].join("");
+        const el = w.firstChild;
+        ancora.innerHTML = "";
+        ancora.append(el);
+        el.focus();
+      }
+      const exibirMensagemDeErro = (a, m) => exibirAlerta(a, "danger", m);
+      const exibirMensagemDeAviso = (a, m) => exibirAlerta(a, "warning", m);
+      const exibirMensagemDeSucesso = (a, m) => exibirAlerta(a, "success", m);
+
+      function loadingStart() {
+        const o = document.querySelector("div.overlay");
+        o.classList.remove("d-none");
+        o.classList.add("d-flex");
+        o.setAttribute("aria-busy", "true");
+        o.removeAttribute("aria-hidden");
+      }
+      function loadingStop() {
+        const o = document.querySelector("div.overlay");
+        o.classList.add("d-none");
+        o.classList.remove("d-flex");
+        o.removeAttribute("aria-busy");
+        o.setAttribute("aria-hidden", "true");
+      }
+
+      function preencheVeiculo() {
+        const cpf = document.getElementById("motorista").value;
+        const v = veiculos.find((x) => x.cpf_motorista === cpf);
+        if (v) document.getElementById("placa").value = v.placa;
+      }
+
+      async function buscarMotoristas() {
+        try {
+          const r = await window.__AUTH__.callApi("/motorista");
+          if (r.status == 401) {
+            alert("login expirado");
+            window.__AUTH__.goTo("/login");
+            return;
+          }
+          if (!r.ok) {
+            exibirMensagemDeAviso(
+              slotAvisos,
+              "Não foi possível localizar os motoristas cadastrados"
+            );
+            return;
+          }
+          window.motoristas = await r.json();
+          const select = document.getElementById("motorista");
+          select.innerHTML = "";
+          for (const m of motoristas) {
+            const o = document.createElement("option");
+            o.text = m.nome;
+            o.value = m.cpf;
+            select.appendChild(o);
+          }
+        } catch {
+          exibirMensagemDeAviso(
+            slotAvisos,
+            "Não foi possível localizar os motoristas cadastrados"
+          );
+        }
+      }
+
+      async function buscarVeiculos() {
+        try {
+          const r = await window.__AUTH__.callApi("/veiculo");
+          if (r.status == 401) {
+            alert("login expirado");
+            window.__AUTH__.goTo("/login");
+            return;
+          }
+          if (!r.ok) {
+            exibirMensagemDeAviso(
+              slotAvisos,
+              "Não foi possível localizar os veículos cadastrados"
+            );
+            return;
+          }
+          window.veiculos = await r.json();
+          const select = document.getElementById("placa");
+          select.innerHTML = "";
+          for (const v of veiculos) {
+            const o = document.createElement("option");
+            o.text = `${v.placa} - ${v.descricao}`;
+            o.value = v.placa;
+            select.appendChild(o);
+          }
+        } catch {
+          exibirMensagemDeAviso(
+            slotAvisos,
+            "Não foi possível localizar os veículos cadastrados"
+          );
+        }
+      }
+
+      function habilitaExcluir(id) {
+        const b = document.getElementById("btn-excluir");
+        b.setAttribute("onclick", `excluirViagem(${id})`);
+        b.setAttribute("aria-label", `Excluir viagem ${id}`);
+        b.classList.remove("btn-outline-danger");
+        b.classList.add("btn-danger");
+        b.removeAttribute("disabled");
+      }
+      function habilitaBtnDespesa() {
+        const b = document.getElementById("btn-despesa");
+        b.classList.remove("btn-outline-success");
+        b.classList.add("btn-success");
+        b.removeAttribute("disabled");
+      }
+      function desabilitaExcluir() {
+        const b = document.getElementById("btn-excluir");
+        b.removeAttribute("onclick");
+        b.removeAttribute("aria-label");
+        b.classList.add("btn-outline-danger");
+        b.classList.remove("btn-danger");
+        b.setAttribute("disabled", "");
+      }
+      function desabilitaBtnDespesa() {
+        const b = document.getElementById("btn-despesa");
+        b.classList.add("btn-outline-success");
+        b.classList.remove("btn-success");
+        b.setAttribute("disabled", "");
+      }
+      function resetarFormulario() {
+        document.getElementById("method").value = "post";
+        document.getElementById("id").value = "";
+        document.getElementById("solicitante").value = "";
+        document.getElementById("origem").value = "";
+        document.getElementById("destino").value = "";
+        document.getElementById("motorista").value = "";
+        document.getElementById("placa").value = "";
+        document.getElementById("data").value = "";
+        document.getElementById("valor").value = "";
+        document.getElementById("nf").value = "";
+        document.getElementById("carga").value = "";
+        desabilitaExcluir();
+        desabilitaBtnDespesa();
+      }
+
+      async function editarViagem(id) {
+        try {
+          loadingStart();
+          const r = await window.__AUTH__.callApi(`/viagem/${id}`);
+          if (r.status == 401) {
+            alert("login expirado");
+            window.__AUTH__.goTo("/login");
+            return;
+          }
+          if (!r.ok) {
+            exibirMensagemDeAviso(
+              slotAvisos,
+              "Não foi possível consultar os dados dessa viagem"
+            );
+            return;
+          }
+          window.viagemAEditar = await r.json();
+
+          document.getElementById("method").value = "put";
+          document.getElementById("id").value = viagemAEditar.id;
+          document.getElementById("solicitante").value =
+            viagemAEditar.solicitante ?? "";
+          document.getElementById("origem").value = viagemAEditar.origem;
+          document.getElementById("destino").value = viagemAEditar.destino;
+          document.getElementById("motorista").value =
+            viagemAEditar.cpf_motorista;
+          document.getElementById("placa").value = viagemAEditar.placa;
+          document.getElementById("data").value = viagemAEditar.data_viagem;
+          document.getElementById("valor").value = viagemAEditar.valor;
+          document.getElementById("nf").value = viagemAEditar.nf;
+          document.getElementById("carga").value = viagemAEditar.carga;
+
+          await preencheTabelaDespesas(id);
+          habilitaExcluir(id);
+          habilitaBtnDespesa();
+        } catch {
+          exibirMensagemDeAviso(
+            slotAvisos,
+            "Não foi possível trazer os dados dessa viagem"
+          );
+        } finally {
+          loadingStop();
+        }
+      }
+
+      async function preencheTabelaDespesas(id) {
+        const table = document.getElementById("table-despesas");
+        const r = await window.__AUTH__.callApi(`/viagem/${id}/despesas`);
+        if (r.status == 401) {
+          alert("login expirado");
+          window.__AUTH__.goTo("/login");
+          return;
+        }
+        if (!r.ok) {
+          exibirMensagemDeAviso(
+            slotAvisos,
+            "Não foi possível consultar as despesas dessa viagem"
+          );
+          return;
+        }
+
+        window.viagemAEditar.despesas = await r.json();
+        let itens = "";
+        for (const d of viagemAEditar.despesas) {
+          const v = Number(d.valor) || 0;
+          const vf = v.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          });
+          itens += `<tr>
+            <td data-title="Descrição">${d.descricao}</td>
+            <td data-title="Valor"><span class="badge text-bg-light">${vf}</span></td>
+            <td data-title="Ações" class="text-end">
+              <button class="btn btn-sm btn-outline-primary" onclick="abrirDespesa(${d.ID})" aria-label="Editar despesa ${d.descricao}">
+                <i class="bi bi-pencil-square"></i> Editar
+              </button>
+            </td>
+          </tr>`;
+        }
+        table.tBodies[0].innerHTML =
+          itens ||
+          `<tr><td colspan="3" class="text-center text-secondary py-3">Sem despesas</td></tr>`;
+      }
+
+      function abrirDespesa(id) {
+        const ID_viagem = document.getElementById("id").value;
+        const popup = document.getElementById("popup");
+        popup.innerHTML = `
+          <h2 id="popup-title" class="h5 mb-3">Cadastro de despesa</h2>
+          <form name="despesa" novalidate>
+            <div class="row g-3">
+              <input type="hidden" name="method" id="method" value="post">
+              <input type="hidden" name="id" id="id">
+              <input type="hidden" name="ID_viagem" id="ID_viagem" value="${ID_viagem}">
+              <div class="col-12 col-md-8">
+                <label for="descricao" class="form-label">Descrição</label>
+                <input name="descricao" id="descricao" type="text" class="form-control" placeholder="Descrição da despesa">
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="valor" class="form-label">Valor</label>
+                <div class="input-group">
+                  <span class="input-group-text" aria-hidden="true">R$</span>
+                  <input name="valor" id="valor" type="number" step="any" class="form-control" placeholder="0,00" inputmode="decimal">
+                </div>
+              </div>
+            </div>
+            <div class="d-flex justify-content-end mt-3">
+              <button class="btn btn-primary" type="button" onclick="salvarDespesa()" aria-label="Salvar despesa">Salvar</button>
+            </div>
+          </form>
+          <button class="close btn btn-sm btn-light" onclick="closePopup()" aria-label="Fechar">X</button>
+        `;
+        if (!!id) {
+          document.querySelector(`form[name="despesa"] #id`).value = id;
+          document.querySelector(`form[name="despesa"] #method`).value = "put";
+          const desp = (window.viagemAEditar?.despesas || []).find(
+            (d) => d.ID == id
+          );
+          if (desp) {
+            document.querySelector(`form[name="despesa"] #descricao`).value =
+              desp.descricao;
+            document.querySelector(`form[name="despesa"] #valor`).value =
+              desp.valor;
+          }
+        }
+        popup.style.display = "block";
+        popup.setAttribute("aria-hidden", "false");
+        popup.focus();
+        const first = popup.querySelector("#descricao");
+        if (first) first.focus();
+      }
+      function closePopup() {
+        const popup = document.getElementById("popup");
+        popup.style.display = "none";
+        popup.setAttribute("aria-hidden", "true");
+      }
+
+      async function salvarDespesa() {
+        loadingStart();
+        const descricao = document.querySelector(
+          `form[name="despesa"] #descricao`
+        ).value;
+        const ID_viagem = document.querySelector(
+          `form[name="despesa"] #ID_viagem`
+        ).value;
+        const id = document.querySelector(`form[name="despesa"] #id`).value;
+        const valor = document.querySelector(
+          `form[name="despesa"] #valor`
+        ).value;
+        const cpf_user = sessionStorage.getItem("user");
+        const method = document.querySelector(
+          `form[name="despesa"] #method`
+        ).value;
+        const path = method === "put" ? `/despesa/${id}` : "/despesa";
+        try {
+          const r = await window.__AUTH__.callApi(path, {
+            method,
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              ID_despesa: id,
+              descricao,
+              valor,
+              ID_viagem,
+              cpf_user,
+            }),
+          });
+          if (r.status == 401) {
+            alert("login expirado");
+            window.__AUTH__.goTo("/login");
+            return;
+          }
+          if (r.status == 400) {
+            let { message } = await r.json().catch(() => ({}));
+            exibirMensagemDeAviso(slotAvisos, message || "Dados inválidos.");
+            return;
+          }
+          if (!r.ok) {
+            exibirMensagemDeAviso(
+              slotAvisos,
+              "Não foi possível salvar a despesa"
+            );
+            return;
+          }
+          exibirMensagemDeSucesso(slotAvisos, "Despesa salva");
+          closePopup();
+          await preencheTabelaDespesas(ID_viagem);
+        } catch {
+          exibirMensagemDeAviso(slotAvisos, "Erro ao salvar a despesa");
+        } finally {
+          loadingStop();
+        }
+      }
+
+      async function excluirViagem(id) {
+        if (
+          !window.confirm(
+            "Tem certeza que deseja excluir essa viagem? Essa operação é irreversível."
+          )
+        )
+          return;
+        try {
+          loadingStart();
+          const r = await window.__AUTH__.callApi(`/viagem/${id}`, {
+            method: "delete",
+          });
+          if (r.status == 401) {
+            alert("login expirado");
+            window.__AUTH__.goTo("/login");
+            return;
+          }
+          if (!r.ok) {
+            exibirMensagemDeAviso(
+              slotAvisos,
+              "Não foi possível excluir essa viagem"
+            );
+            return;
+          }
+          alert("Excluído com sucesso");
+          window.__AUTH__.goTo("/viagens");
+        } catch {
+          exibirMensagemDeAviso(
+            slotAvisos,
+            "Não foi possível excluir essa viagem"
+          );
+        } finally {
+          loadingStop();
+        }
+      }
+
+      document
+        .querySelector("form")
+        .addEventListener("submit", (e) => e.preventDefault());
+
+      async function salvarViagem() {
+        loadingStart();
+        const method = document.getElementById("method").value;
+        const id = document.getElementById("id").value;
+        const solicitante = document.getElementById("solicitante").value;
+        const origem = document.getElementById("origem").value;
+        const destino = document.getElementById("destino").value;
+        const cpf_motorista = document.getElementById("motorista").value;
+        const placa = document.getElementById("placa").value;
+        const data_viagem = document.getElementById("data").value;
+        const valor = document.getElementById("valor").value;
+        const nf = document.getElementById("nf").value;
+        const carga = document.getElementById("carga").value;
+        const path = method === "put" ? `/viagem/${id}` : "/viagem";
+        const cpf_user = sessionStorage.getItem("user");
+        try {
+          const r = await window.__AUTH__.callApi(path, {
+            method,
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              solicitante,
+              origem,
+              destino,
+              cpf_motorista,
+              placa,
+              data_viagem,
+              valor,
+              nf,
+              carga,
+              cpf_user,
+            }),
+          });
+          if (r.status == 401) {
+            alert("login expirado");
+            window.__AUTH__.goTo("/login");
+            return;
+          }
+          if (r.status == 400) {
+            let { message } = await r.json().catch(() => ({}));
+            exibirMensagemDeAviso(slotAvisos, message || "Dados inválidos.");
+            return;
+          }
+          if (!r.ok) {
+            exibirMensagemDeAviso(
+              slotAvisos,
+              "Não foi possível salvar os dados dessa viagem"
+            );
+            return;
+          }
+
+          exibirMensagemDeSucesso(slotAvisos, "Viagem salva");
+          const modal = new bootstrap.Modal(
+            document.getElementById("modal-pos-salvar"),
+            {}
+          );
+          modal.show();
+          habilitaBtnDespesa();
+        } catch {
+          exibirMensagemDeAviso(
+            slotAvisos,
+            "Não foi possível cadastrar a viagem"
+          );
+        } finally {
+          loadingStop();
+        }
+      }
+
+      (async function onLoad() {
+        loadingStart();
+        await buscarMotoristas();
+        await buscarVeiculos();
+        const qs = new URLSearchParams(window.location.search);
+        if (!!qs.get("id")) await editarViagem(qs.get("id"));
+        preencheVeiculo();
+        loadingStop();
+      })();
+    </script>
+
+    <script src="../public/header.js" defer></script>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+      crossorigin="anonymous"
+    ></script>
+
+    <div
+      class="modal"
+      id="modal-pos-salvar"
+      tabindex="-1"
+      aria-labelledby="modal-title"
+      aria-modal="true"
+      role="dialog"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="modal-title">Salvo com sucesso</h1>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Fechar"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p>O que você deseja fazer?</p>
+            <p>Voltar para a listagem de viagens ou cadastrar uma nova?</p>
+          </div>
+          <div class="modal-footer d-flex justify-content-between">
+            <button
+              type="button"
+              class="btn btn-secondary d-flex"
+              onclick="window.__AUTH__.goTo('/viagens')"
+            >
+              Voltar para a listagem
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary d-flex"
+              onclick="window.__AUTH__.goTo('/viagem')"
+            >
+              Cadastrar novo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>
