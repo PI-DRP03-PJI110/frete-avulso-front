@@ -32,6 +32,8 @@
     <link rel="stylesheet" href="../dark.css" />
     <link rel="stylesheet" href="../public/header.css" />
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
     <style>
       :root {
         --card-radius: 16px;
@@ -47,8 +49,8 @@
         margin-top: var(--app-header-h, 64px);
       }
       .page-wrap {
+        max-width: 1200px;
         padding-block: clamp(16px, 2.5vw, 28px);
-        max-width: 1100px;
       }
 
       .page-head {
@@ -66,7 +68,7 @@
         font-weight: 600;
         letter-spacing: -0.01em;
       }
-      .page-title .title-icon {
+      .title-icon {
         display: inline-grid;
         place-items: center;
         width: 34px;
@@ -75,13 +77,36 @@
         background: color-mix(in srgb, var(--bs-primary), transparent 86%);
         border: 1px solid var(--bs-border-color);
       }
-      .page-title .title-icon i {
-        font-size: 1.05rem;
-        opacity: 0.9;
-      }
       .page-subtle {
         color: var(--bs-secondary-color);
         margin-left: 42px;
+      }
+
+      .kpi-grid {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: 1fr 1fr;
+      }
+      @media (min-width: 768px) {
+        .kpi-grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+      .kpi {
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        box-shadow: var(--shadow-1);
+      }
+      .kpi .label {
+        color: var(--bs-secondary-color);
+        font-size: 0.85rem;
+      }
+      .kpi .value {
+        font-weight: 700;
+        font-size: 1.15rem;
+        letter-spacing: -0.01em;
       }
 
       .dash-grid {
@@ -89,12 +114,12 @@
         gap: 1rem;
         grid-template-columns: 1fr;
       }
-      @media (min-width: 768px) {
+      @media (min-width: 992px) {
         .dash-grid {
           grid-template-columns: 1fr 1fr;
         }
       }
-      @media (min-width: 1200px) {
+      @media (min-width: 1400px) {
         .dash-grid {
           grid-template-columns: 1fr 1fr 1fr;
         }
@@ -125,25 +150,27 @@
         font-weight: 600;
       }
 
-      .dash-actions .btn {
-        --bs-btn-padding-y: 0.25rem;
-        --bs-btn-padding-x: 0.6rem;
-      }
-
-      .embed-wrap {
+      .chart-wrap {
         position: relative;
         width: 100%;
-        aspect-ratio: 16 / 10;
-        background: var(--bs-body-bg);
+        aspect-ratio: 16/10;
+        padding: 0.5rem;
       }
-      .embed-wrap iframe {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        border: 0;
-        background: transparent;
+      .chart-wrap canvas {
+        width: 100% !important;
+        height: 100% !important;
       }
+
+      .table-wrap {
+        padding: 0.5rem 1rem 1rem;
+      }
+      .table thead th {
+        white-space: nowrap;
+      }
+      .table tbody td {
+        vertical-align: middle;
+      }
+
       .skeleton {
         position: absolute;
         inset: 0;
@@ -175,7 +202,6 @@
       }
     </style>
   </head>
-
   <body>
     <a class="visually-hidden-focusable" href="#main">Pular para o conteúdo</a>
 
@@ -197,8 +223,9 @@
           <button
             class="btn btn-outline-secondary btn-sm"
             onclick="window.print()"
+            aria-label="Imprimir"
           >
-            Imprimir
+            <i class="bi bi-printer"></i>
           </button>
         </div>
       </div>
@@ -206,106 +233,197 @@
         Visão rápida: desempenho, custos e receita.
       </p>
 
-      <section class="dash-grid">
+      <section class="kpi-grid mb-3" id="kpi-grid">
+        <div class="kpi">
+          <div class="label">Viagens</div>
+          <div class="value" id="kpi-viagens">-</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Receita</div>
+          <div class="value" id="kpi-receita">-</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Custos</div>
+          <div class="value" id="kpi-custos">-</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Margem / Ticket</div>
+          <div class="value" id="kpi-extra">-</div>
+        </div>
+      </section>
+
+      <section class="dash-grid" id="dash-grid">
         <article class="dash-card">
           <div class="dash-header">
             <span class="dash-title">Fretes por período</span>
-            <div class="dash-actions d-print-none">
+            <div class="d-print-none">
               <button
                 class="btn btn-outline-secondary btn-sm"
                 aria-label="Tela cheia: Fretes por período"
-                onclick="fullscreenIframe('pbiframe1')"
+                onclick="enterFullscreen('c1-wrap')"
               >
                 <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i>
               </button>
             </div>
           </div>
-          <div class="embed-wrap">
+          <div class="chart-wrap" id="c1-wrap">
             <div class="skeleton">
-              <div class="w-100">
-                <div class="placeholder-glow mb-2">
-                  <span class="placeholder col-12"></span>
-                </div>
-                <div class="placeholder-glow">
-                  <span class="placeholder col-8"></span>
-                </div>
+              <div class="placeholder-glow w-100">
+                <span class="placeholder col-12"></span>
               </div>
             </div>
-            <iframe
-              id="pbiframe1"
-              src="https://app.powerbi.com/view?r=SEU-REPORT-ID-1"
-              title="Fretes por período"
-              allowfullscreen
-              loading="lazy"
-            ></iframe>
+            <canvas id="chart-fretes"></canvas>
           </div>
         </article>
 
         <article class="dash-card">
           <div class="dash-header">
             <span class="dash-title">Custos vs Receita</span>
-            <div class="dash-actions d-print-none">
+            <div class="d-print-none">
               <button
                 class="btn btn-outline-secondary btn-sm"
                 aria-label="Tela cheia: Custos vs Receita"
-                onclick="fullscreenIframe('pbiframe2')"
+                onclick="enterFullscreen('c2-wrap')"
               >
                 <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i>
               </button>
             </div>
           </div>
-          <div class="embed-wrap">
+          <div class="chart-wrap" id="c2-wrap">
             <div class="skeleton">
-              <div class="w-100">
-                <div class="placeholder-glow mb-2">
-                  <span class="placeholder col-12"></span>
-                </div>
-                <div class="placeholder-glow">
-                  <span class="placeholder col-8"></span>
-                </div>
+              <div class="placeholder-glow w-100">
+                <span class="placeholder col-12"></span>
               </div>
             </div>
-            <iframe
-              id="pbiframe2"
-              src="https://app.powerbi.com/view?r=SEU-REPORT-ID-2"
-              title="Custos vs Receita"
-              allowfullscreen
-              loading="lazy"
-            ></iframe>
+            <canvas id="chart-custos-receita"></canvas>
           </div>
         </article>
 
         <article class="dash-card">
           <div class="dash-header">
-            <span class="dash-title">Top clientes</span>
-            <div class="dash-actions d-print-none">
+            <span class="dash-title">Top motoristas</span>
+            <div class="d-print-none">
               <button
                 class="btn btn-outline-secondary btn-sm"
-                aria-label="Tela cheia: Top clientes"
-                onclick="fullscreenIframe('pbiframe3')"
+                aria-label="Tela cheia: Top motoristas"
+                onclick="enterFullscreen('c4-wrap')"
               >
                 <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i>
               </button>
             </div>
           </div>
-          <div class="embed-wrap">
+          <div class="chart-wrap" id="c4-wrap">
             <div class="skeleton">
-              <div class="w-100">
-                <div class="placeholder-glow mb-2">
-                  <span class="placeholder col-12"></span>
-                </div>
-                <div class="placeholder-glow">
-                  <span class="placeholder col-8"></span>
-                </div>
+              <div class="placeholder-glow w-100">
+                <span class="placeholder col-12"></span>
               </div>
             </div>
-            <iframe
-              id="pbiframe3"
-              src="https://app.powerbi.com/view?r=SEU-REPORT-ID-3"
-              title="Top clientes"
-              allowfullscreen
-              loading="lazy"
-            ></iframe>
+            <canvas id="chart-top-motoristas"></canvas>
+          </div>
+        </article>
+
+        <article class="dash-card">
+          <div class="dash-header">
+            <span class="dash-title">Top veículos</span>
+            <div class="d-print-none">
+              <button
+                class="btn btn-outline-secondary btn-sm"
+                aria-label="Tela cheia: Top veículos"
+                onclick="enterFullscreen('c5-wrap')"
+              >
+                <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <div class="chart-wrap" id="c5-wrap">
+            <div class="skeleton">
+              <div class="placeholder-glow w-100">
+                <span class="placeholder col-12"></span>
+              </div>
+            </div>
+            <canvas id="chart-top-veiculos"></canvas>
+          </div>
+        </article>
+
+        <article class="dash-card">
+          <div class="dash-header">
+            <span class="dash-title">Análise de despesas</span>
+            <div class="d-print-none">
+              <button
+                class="btn btn-outline-secondary btn-sm"
+                aria-label="Tela cheia: Análise de despesas"
+                onclick="enterFullscreen('c6-wrap')"
+              >
+                <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <div class="chart-wrap" id="c6-wrap">
+            <div class="skeleton">
+              <div class="placeholder-glow w-100">
+                <span class="placeholder col-12"></span>
+              </div>
+            </div>
+            <canvas id="chart-despesas"></canvas>
+          </div>
+        </article>
+
+        <article class="dash-card">
+          <div class="dash-header">
+            <span class="dash-title">Análise de rotas</span>
+            <div class="d-print-none">
+              <button
+                class="btn btn-outline-secondary btn-sm"
+                aria-label="Tela cheia: Análise de rotas"
+                onclick="enterFullscreen('c7-wrap')"
+              >
+                <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <div class="chart-wrap" id="c7-wrap">
+            <div class="skeleton">
+              <div class="placeholder-glow w-100">
+                <span class="placeholder col-12"></span>
+              </div>
+            </div>
+            <canvas id="chart-rotas"></canvas>
+          </div>
+        </article>
+
+        <article class="dash-card" style="grid-column: 1 / -1">
+          <div class="dash-header">
+            <span class="dash-title">Últimas viagens</span>
+            <div class="d-print-none">
+              <button
+                class="btn btn-outline-secondary btn-sm"
+                aria-label="Atualizar"
+                onclick="buildUltimasViagens()"
+              >
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <div class="placeholder-glow" id="uv-skeleton">
+              <span class="placeholder col-12"></span>
+              <span class="placeholder col-10 mt-2"></span>
+              <span class="placeholder col-8 mt-2"></span>
+            </div>
+            <div class="table-responsive d-none" id="uv-table-wrap">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Placa</th>
+                    <th>Origem → Destino</th>
+                    <th>Valor</th>
+                    <th>NF-e</th>
+                  </tr>
+                </thead>
+                <tbody id="uv-tbody"></tbody>
+              </table>
+            </div>
           </div>
         </article>
       </section>
@@ -317,29 +435,516 @@
         document.body.setAttribute("data-bs-theme", isDark ? "dark" : "light");
       })();
 
-      document.addEventListener("DOMContentLoaded", () => {
-        document.querySelectorAll(".embed-wrap iframe").forEach((iframe) => {
-          const sk = iframe.parentElement.querySelector(".skeleton");
-          iframe.addEventListener(
-            "load",
-            () => {
-              if (sk) sk.style.display = "none";
-            },
-            { once: true }
-          );
-        });
-      });
+      function cssVar(name) {
+        return getComputedStyle(document.body).getPropertyValue(name).trim();
+      }
+      function chartPalette() {
+        const base = cssVar("--bs-body-color") || "#212529";
+        const grid = cssVar("--bs-border-color") || "rgba(0,0,0,.1)";
+        const secondary = cssVar("--bs-secondary-color") || "#6c757d";
+        const primary =
+          getComputedStyle(document.documentElement)
+            .getPropertyValue("--bs-primary")
+            .trim() || "#0d6efd";
+        const success =
+          getComputedStyle(document.documentElement)
+            .getPropertyValue("--bs-success")
+            .trim() || "#198754";
+        const info =
+          getComputedStyle(document.documentElement)
+            .getPropertyValue("--bs-info")
+            .trim() || "#0dcaf0";
+        const warning =
+          getComputedStyle(document.documentElement)
+            .getPropertyValue("--bs-warning")
+            .trim() || "#ffc107";
+        const danger =
+          getComputedStyle(document.documentElement)
+            .getPropertyValue("--bs-danger")
+            .trim() || "#dc3545";
+        const purple = "#6f42c1";
+        const teal = "#20c997";
+        return {
+          base,
+          grid,
+          secondary,
+          primary,
+          success,
+          info,
+          warning,
+          danger,
+          purple,
+          teal,
+        };
+      }
 
-      function fullscreenIframe(id) {
-        const el = document.getElementById(id);
+      function enterFullscreen(wrapId) {
+        const el = document.getElementById(wrapId);
         if (!el) return;
-        const req =
+        (
           el.requestFullscreen ||
           el.webkitRequestFullscreen ||
           el.mozRequestFullScreen ||
-          el.msRequestFullscreen;
-        if (req) req.call(el);
+          el.msRequestFullscreen
+        )?.call(el);
       }
+
+      const fmtBRL = (v) =>
+        Number(v || 0).toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        });
+      const fmtMes = (s) => s;
+
+      const ENDPOINTS = {
+        kpis: "/dash/kpis",
+        fretesPeriodo: "/dash/viagens-mensal",
+        custosReceita: "/dash/resumo-financeiro",
+        topMotoristas: "/dash/top-motoristas",
+        topVeiculos: "/dash/top-veiculos",
+        analiseDespesas: "/dash/analise-despesas",
+        analiseRotas: "/dash/analise-rotas",
+        ultimasViagens: "/dash/ultimas-viagens?limit=50",
+      };
+
+      async function getJSON(path) {
+        try {
+          const r = await window.__AUTH__.callApi(path);
+          if (r.status == 401) {
+            alert("login expirado");
+            window.__AUTH__.goTo("/login");
+            return [];
+          }
+          if (!r.ok) return [];
+          return await r.json();
+        } catch (e) {
+          console.error("GET JSON fail", path, e);
+          return [];
+        }
+      }
+
+      async function buildKPIs() {
+        const data = await getJSON(ENDPOINTS.kpis);
+        const row = Array.isArray(data) ? data[0] || {} : data || {};
+        const qtd = row.qtd_viagens ?? row.total_viagens ?? row.qtd ?? "-";
+        const rec = row.receita_total ?? row.receita ?? null;
+        const cus = row.custo_total ?? row.custos ?? null;
+        const margem = row.margem_percent ?? row.margem ?? null;
+        const ticket = row.ticket_medio ?? row.ticket ?? null;
+
+        document.getElementById("kpi-viagens").textContent = String(qtd);
+        document.getElementById("kpi-receita").textContent =
+          rec != null ? fmtBRL(rec) : "-";
+        document.getElementById("kpi-custos").textContent =
+          cus != null ? fmtBRL(cus) : "-";
+
+        let extra = "-";
+        if (margem != null && !isNaN(Number(margem)))
+          extra = `${Number(margem).toFixed(1)}%`;
+        if (ticket != null && !isNaN(Number(ticket)))
+          extra += ` • ${fmtBRL(ticket)}`;
+        document.getElementById("kpi-extra").textContent = extra;
+      }
+
+      let CHARTS = {};
+
+      async function buildFretesPeriodo() {
+        const pal = chartPalette();
+        try {
+          const data = await getJSON(ENDPOINTS.fretesPeriodo);
+          const labels = data.map((d) => fmtMes(d.mes || d.data));
+          const values = data.map((d) =>
+            Number(d.total_fretes ?? d.total ?? 0)
+          );
+          const el = document.getElementById("chart-fretes")?.getContext("2d");
+          if (!el) throw new Error("canvas chart-fretes não encontrado");
+
+          CHARTS.fretes?.destroy();
+          CHARTS.fretes = new Chart(el, {
+            type: "line",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "Fretes",
+                  data: values,
+                  borderColor: pal.primary,
+                  backgroundColor: pal.primary + "33",
+                  fill: true,
+                  tension: 0.25,
+                  pointRadius: 2,
+                },
+              ],
+            },
+            options: {
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: { label: (ctx) => ` ${ctx.parsed.y} fretes` },
+                },
+              },
+              scales: {
+                x: {
+                  ticks: { color: pal.secondary },
+                  grid: { color: pal.grid },
+                },
+                y: {
+                  ticks: { color: pal.secondary, precision: 0 },
+                  grid: { color: pal.grid },
+                },
+              },
+            },
+          });
+        } finally {
+          hideSkeletonByCanvas("chart-fretes");
+        }
+      }
+
+      async function buildCustosReceita() {
+        const pal = chartPalette();
+        try {
+          const data = await getJSON(ENDPOINTS.custosReceita);
+          const labels = data.map((d) => fmtMes(d.mes || d.data));
+          const custos = data.map((d) => Number(d.custos || 0));
+          const receita = data.map((d) => Number(d.receita || 0));
+          const el = document
+            .getElementById("chart-custos-receita")
+            ?.getContext("2d");
+          if (!el)
+            throw new Error("canvas chart-custos-receita não encontrado");
+
+          CHARTS.cr?.destroy();
+          CHARTS.cr = new Chart(el, {
+            type: "bar",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "Custos",
+                  data: custos,
+                  backgroundColor: pal.warning + "88",
+                  borderColor: pal.warning,
+                  borderWidth: 1,
+                },
+                {
+                  label: "Receita",
+                  data: receita,
+                  backgroundColor: pal.success + "88",
+                  borderColor: pal.success,
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { labels: { color: pal.base } },
+                tooltip: {
+                  callbacks: {
+                    label: (ctx) =>
+                      ` ${ctx.dataset.label}: ${fmtBRL(ctx.parsed.y)}`,
+                  },
+                },
+              },
+              scales: {
+                x: {
+                  ticks: { color: pal.secondary },
+                  grid: { color: pal.grid },
+                },
+                y: {
+                  ticks: { color: pal.secondary, callback: (v) => fmtBRL(v) },
+                  grid: { color: pal.grid },
+                },
+              },
+            },
+          });
+        } finally {
+          hideSkeletonByCanvas("chart-custos-receita");
+        }
+      }
+
+      async function buildTopMotoristas() {
+        const pal = chartPalette();
+        try {
+          const data = await getJSON(ENDPOINTS.topMotoristas);
+          const top = [...data]
+            .sort(
+              (a, b) => Number(b.valor_total || 0) - Number(a.valor_total || 0)
+            )
+            .slice(0, 10);
+          const labels = top.map((d) => d.motorista || d.nome || "-");
+          const valores = top.map((d) => Number(d.valor_total || 0));
+          const el = document
+            .getElementById("chart-top-motoristas")
+            ?.getContext("2d");
+          if (!el)
+            throw new Error("canvas chart-top-motoristas não encontrado");
+
+          CHARTS.tm?.destroy();
+          CHARTS.tm = new Chart(el, {
+            type: "bar",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "Valor",
+                  data: valores,
+                  backgroundColor: pal.info + "88",
+                  borderColor: pal.info,
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              indexAxis: "y",
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: { label: (ctx) => ` ${fmtBRL(ctx.parsed.x)}` },
+                },
+              },
+              scales: {
+                x: {
+                  ticks: { color: pal.secondary, callback: (v) => fmtBRL(v) },
+                  grid: { color: pal.grid },
+                },
+                y: {
+                  ticks: { color: pal.secondary },
+                  grid: { color: pal.grid },
+                },
+              },
+            },
+          });
+        } finally {
+          hideSkeletonByCanvas("chart-top-motoristas");
+        }
+      }
+
+      async function buildTopVeiculos() {
+        const pal = chartPalette();
+        try {
+          const data = await getJSON(ENDPOINTS.topVeiculos);
+          const top = [...data]
+            .sort(
+              (a, b) => Number(b.valor_total || 0) - Number(a.valor_total || 0)
+            )
+            .slice(0, 10);
+          const labels = top.map((d) => d.placa || d.veiculo || "-");
+          const valores = top.map((d) => Number(d.valor_total || 0));
+          const el = document
+            .getElementById("chart-top-veiculos")
+            ?.getContext("2d");
+          if (!el) throw new Error("canvas chart-top-veiculos não encontrado");
+
+          CHARTS.tv?.destroy();
+          CHARTS.tv = new Chart(el, {
+            type: "bar",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "Valor",
+                  data: valores,
+                  backgroundColor: pal.purple + "88",
+                  borderColor: pal.purple,
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              indexAxis: "y",
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: { label: (ctx) => ` ${fmtBRL(ctx.parsed.x)}` },
+                },
+              },
+              scales: {
+                x: {
+                  ticks: { color: pal.secondary, callback: (v) => fmtBRL(v) },
+                  grid: { color: pal.grid },
+                },
+                y: {
+                  ticks: { color: pal.secondary },
+                  grid: { color: pal.grid },
+                },
+              },
+            },
+          });
+        } finally {
+          hideSkeletonByCanvas("chart-top-veiculos");
+        }
+      }
+
+      async function buildAnaliseDespesas() {
+        const pal = chartPalette();
+        try {
+          const data = await getJSON(ENDPOINTS.analiseDespesas);
+          const map = {};
+          data.forEach((d) => {
+            const k = d.categoria || d.tipo || "Outros";
+            map[k] = (map[k] || 0) + Number(d.valor || 0);
+          });
+          const labels = Object.keys(map);
+          const valores = Object.values(map);
+          const colors = labels.map(
+            (_, i) =>
+              [
+                pal.info,
+                pal.warning,
+                pal.success,
+                pal.teal,
+                pal.primary,
+                pal.danger,
+                pal.purple,
+              ][i % 7] + "88"
+          );
+
+          const el = document
+            .getElementById("chart-despesas")
+            ?.getContext("2d");
+          if (!el) throw new Error("canvas chart-despesas não encontrado");
+
+          CHARTS.desp?.destroy();
+          CHARTS.desp = new Chart(el, {
+            type: "doughnut",
+            data: {
+              labels,
+              datasets: [
+                { data: valores, backgroundColor: colors, borderWidth: 1 },
+              ],
+            },
+            options: {
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { labels: { color: pal.base } },
+                tooltip: {
+                  callbacks: {
+                    label: (ctx) => ` ${ctx.label}: ${fmtBRL(ctx.parsed)}`,
+                  },
+                },
+              },
+            },
+          });
+        } finally {
+          hideSkeletonByCanvas("chart-despesas");
+        }
+      }
+
+      async function buildAnaliseRotas() {
+        const pal = chartPalette();
+        try {
+          const data = await getJSON(ENDPOINTS.analiseRotas);
+          const rows = [...data]
+            .sort((a, b) => Number(b.qtd || 0) - Number(a.qtd || 0))
+            .slice(0, 10);
+          const labels = rows.map(
+            (d) => `${d.origem || "-"} → ${d.destino || "-"}`
+          );
+          const qtd = rows.map((d) => Number(d.qtd || 0));
+          const el = document.getElementById("chart-rotas")?.getContext("2d");
+          if (!el) throw new Error("canvas chart-rotas não encontrado");
+
+          CHARTS.rotas?.destroy();
+          CHARTS.rotas = new Chart(el, {
+            type: "bar",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "Viagens",
+                  data: qtd,
+                  backgroundColor: pal.teal + "88",
+                  borderColor: pal.teal,
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              indexAxis: "y",
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: {
+                  ticks: { color: pal.secondary },
+                  grid: { color: pal.grid },
+                },
+                y: {
+                  ticks: { color: pal.secondary },
+                  grid: { color: pal.grid },
+                },
+              },
+            },
+          });
+        } finally {
+          hideSkeletonByCanvas("chart-rotas");
+        }
+      }
+
+      function hideSkeletonByCanvas(canvasId) {
+        const cv = document.getElementById(canvasId);
+        const sk = cv?.closest(".chart-wrap")?.querySelector(".skeleton");
+        if (sk) sk.style.display = "none";
+      }
+
+      async function buildUltimasViagens() {
+        const sk = document.getElementById("uv-skeleton");
+        const wrap = document.getElementById("uv-table-wrap");
+        const tbody = document.getElementById("uv-tbody");
+        sk.classList.remove("d-none");
+        wrap.classList.add("d-none");
+        tbody.innerHTML = "";
+
+        const rows = await getJSON(ENDPOINTS.ultimasViagens);
+        const fmtDate = (s) => {
+          if (!s) return "-";
+          const d = new Date(String(s).trim() + "T00:00:00");
+          return isNaN(d) ? s : d.toLocaleDateString("pt-BR");
+        };
+
+        if (!rows || !rows.length) {
+          tbody.innerHTML = `<tr><td colspan="5" class="text-center text-secondary">Sem dados.</td></tr>`;
+        } else {
+          rows.forEach((v) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${fmtDate(v.data_viagem)}</td>
+              <td>${v.placa || "-"}</td>
+              <td>${v.origem || "-"} &rarr; ${v.destino || "-"}</td>
+              <td>${fmtBRL(v.valor || 0)}</td>
+              <td>${v.nf || "-"}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        sk.classList.add("d-none");
+        wrap.classList.remove("d-none");
+      }
+
+      const obs = new MutationObserver(() => buildAll());
+      obs.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["data-bs-theme"],
+      });
+
+      async function buildAll() {
+        await Promise.all([
+          buildKPIs(),
+          buildFretesPeriodo(),
+          buildCustosReceita(),
+          buildTopMotoristas(),
+          buildTopVeiculos(),
+          buildAnaliseDespesas(),
+          buildAnaliseRotas(),
+        ]);
+        await buildUltimasViagens();
+      }
+
+      document.addEventListener("DOMContentLoaded", buildAll);
     </script>
 
     <script src="../public/header.js" defer></script>
