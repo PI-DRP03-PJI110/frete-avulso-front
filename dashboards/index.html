@@ -131,7 +131,7 @@
         border-radius: var(--card-radius);
         box-shadow: var(--shadow-1);
         overflow: hidden;
-        transition: box-shadow 0.2s ease, transform 0.2s ease;
+        transition: box-shadow 0.2s, transform 0.2s;
       }
       .dash-card:hover {
         box-shadow: var(--shadow-2);
@@ -188,16 +188,88 @@
         outline-offset: 2px;
       }
 
+      @page {
+        size: auto;
+        margin: 12mm;
+      }
+
       @media print {
-        .d-print-none {
+        #app-header,
+        header,
+        header.app-header,
+        [data-app-header],
+        nav,
+        .app-header,
+        .app-navbar,
+        .app-toolbar {
+          display: none !important;
+          visibility: hidden !important;
+          height: 0 !important;
+        }
+
+        :root {
+          --app-header-h: 0 !important;
+        }
+        main {
+          margin-top: 0 !important;
+          padding-top: 0 !important;
+        }
+        .page-head,
+        .page-subtle,
+        .d-print-none,
+        .dash-header .btn,
+        .dash-header .d-print-none {
           display: none !important;
         }
+      }
+
+      @media print {
+        #app-header,
+        .page-head,
+        .page-subtle,
+        .title-icon,
+        .d-print-none,
+        .dash-header .btn,
+        .dash-header .d-print-none,
+        .skeleton {
+          display: none !important;
+        }
+
+        .kpi-grid,
         .dash-grid {
           grid-template-columns: 1fr !important;
         }
+
+        .kpi,
+        .dash-card,
+        .table-wrap,
+        .chart-wrap {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+
         .dash-card {
           box-shadow: none;
           border-color: #999;
+        }
+
+        .chart-wrap {
+          aspect-ratio: auto;
+          height: 360px;
+        }
+
+        main {
+          margin: 0;
+          padding: 0;
+        }
+        .page-wrap {
+          max-width: 100%;
+          padding: 0;
+        }
+
+        body {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
       }
     </style>
@@ -557,8 +629,6 @@
             Number(d.total_fretes ?? d.total ?? 0)
           );
           const el = document.getElementById("chart-fretes")?.getContext("2d");
-          if (!el) throw new Error("canvas chart-fretes não encontrado");
-
           CHARTS.fretes?.destroy();
           CHARTS.fretes = new Chart(el, {
             type: "line",
@@ -611,9 +681,6 @@
           const el = document
             .getElementById("chart-custos-receita")
             ?.getContext("2d");
-          if (!el)
-            throw new Error("canvas chart-custos-receita não encontrado");
-
           CHARTS.cr?.destroy();
           CHARTS.cr = new Chart(el, {
             type: "bar",
@@ -678,9 +745,6 @@
           const el = document
             .getElementById("chart-top-motoristas")
             ?.getContext("2d");
-          if (!el)
-            throw new Error("canvas chart-top-motoristas não encontrado");
-
           CHARTS.tm?.destroy();
           CHARTS.tm = new Chart(el, {
             type: "bar",
@@ -736,8 +800,6 @@
           const el = document
             .getElementById("chart-top-veiculos")
             ?.getContext("2d");
-          if (!el) throw new Error("canvas chart-top-veiculos não encontrado");
-
           CHARTS.tv?.destroy();
           CHARTS.tv = new Chart(el, {
             type: "bar",
@@ -802,12 +864,9 @@
                 pal.purple,
               ][i % 7] + "88"
           );
-
           const el = document
             .getElementById("chart-despesas")
             ?.getContext("2d");
-          if (!el) throw new Error("canvas chart-despesas não encontrado");
-
           CHARTS.desp?.destroy();
           CHARTS.desp = new Chart(el, {
             type: "doughnut",
@@ -846,8 +905,6 @@
           );
           const qtd = rows.map((d) => Number(d.qtd || 0));
           const el = document.getElementById("chart-rotas")?.getContext("2d");
-          if (!el) throw new Error("canvas chart-rotas não encontrado");
-
           CHARTS.rotas?.destroy();
           CHARTS.rotas = new Chart(el, {
             type: "bar",

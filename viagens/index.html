@@ -81,10 +81,6 @@
         background: color-mix(in srgb, var(--bs-primary), transparent 86%);
         border: 1px solid var(--bs-border-color);
       }
-      .page-title .title-icon i {
-        font-size: 1.05rem;
-        opacity: 0.9;
-      }
 
       .overlay {
         position: fixed;
@@ -217,7 +213,6 @@
         content: "\F3EA";
       }
 
-      /* Card "Nova viagem" */
       .card-new {
         display: flex;
         align-items: center;
@@ -248,15 +243,55 @@
         background: color-mix(in srgb, var(--bs-secondary-bg), transparent 5%);
       }
 
+      @page {
+        size: auto;
+        margin: 12mm;
+      }
       @media print {
-        .d-print-none {
+        #app-header,
+        .page-head,
+        .filters-card,
+        .overlay,
+        .modal,
+        .d-print-none,
+        .no-print {
           display: none !important;
         }
+
         .grid-cards {
-          grid-template-columns: 1fr;
+          display: block;
+        }
+        .grid-cards > * {
+          page-break-inside: avoid;
+          break-inside: avoid;
+          margin-bottom: 10mm;
         }
         .card-viagem {
           box-shadow: none;
+          border-color: #999;
+        }
+
+        .card-actions,
+        .card-viagem button {
+          display: none !important;
+        }
+
+        .grid-cards,
+        #lista-viagens {
+          width: 100%;
+        }
+        main {
+          margin: 0;
+          padding: 0;
+        }
+        .page-wrap {
+          max-width: 100%;
+          padding: 0;
+        }
+
+        body {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
       }
     </style>
@@ -656,9 +691,8 @@
       }
 
       function newCardHtml() {
-        const href = `${window.APP_PATH || ""}/viagem`;
         return `
-          <div class="card-viagem card-new border-primary-subtle"
+          <div class="card-viagem card-new border-primary-subtle no-print"
                role="button" tabindex="0"
                aria-label="Cadastrar nova viagem"
                onclick="window.__AUTH__.goTo('/viagem')"
@@ -670,7 +704,7 @@
 
       function renderCards(lista) {
         const wrap = document.getElementById("lista-viagens");
-        let html = newCardHtml(); // SEMPRE primeiro
+        let html = newCardHtml();
         if (!lista || !lista.length) {
           html += `<div class="text-center text-body-secondary py-4">Nenhuma viagem encontrada</div>`;
           wrap.innerHTML = html;
@@ -713,7 +747,7 @@
             </div>
             <div class="d-flex justify-content-between align-items-center">
               <div class="chip chip-money"><i class="bi bi-cash-coin"></i> ${valorFmt}</div>
-              <div class="d-flex gap-2">
+              <div class="d-flex gap-2 card-actions">
                 <button class="btn btn-outline-primary btn-sm" onclick="window.__AUTH__.goTo('/viagem/?id=${
                   v.id
                 }')">Editar</button>
@@ -751,6 +785,7 @@
             style: "currency",
             currency: "BRL",
           });
+
           document.getElementById("modalTitulo").textContent = `Viagem ${
             v.placa || ""
           }`.trim();
@@ -776,6 +811,7 @@
           const r = await window.__AUTH__.callApi(`/viagem/${id}/despesas`);
           let despesas = [];
           if (r.ok) despesas = await r.json();
+
           if (!despesas || despesas.length === 0) {
             document.getElementById("semDespesas").classList.remove("d-none");
           } else {
@@ -860,6 +896,7 @@
         if (vmax !== "" && !isNaN(Number(vmax))) active++;
         document.getElementById("badgeActiveFilters").textContent =
           String(active);
+
         const adv = document.getElementById("advFilters");
         if (!adv) return;
         const isShown = adv.classList.contains("show");
